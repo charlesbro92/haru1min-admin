@@ -1015,23 +1015,27 @@ tr:hover td { background:rgba(255,255,255,.02); }
           </select>
         </div>
       </div>
-      <!-- 발송시간 / 시작일 -->
+      <!-- 발송시간 -->
+      <div>
+        <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">발송 시간</label>
+        <select id="sdInputHour" style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none">
+          <option value="7">오전 7시</option><option value="8">오전 8시</option><option value="9">오전 9시</option>
+        </select>
+      </div>
+      <!-- 시작일 / 종료일 -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">발송 시간</label>
-          <select id="sdInputHour" style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none">
-            <option value="7">오전 7시</option><option value="8">오전 8시</option><option value="9">오전 9시</option>
-          </select>
+          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">구독 시작일</label>
+          <input id="sdInputStartDate" type="date"
+            style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'">
         </div>
         <div>
-          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">구독 시작일 (KST 00:00)</label>
-          <div id="sdCreatedAt" style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:9px 0;line-height:1.6"></div>
+          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">구독 종료일</label>
+          <input id="sdInputEndDate" type="date"
+            style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'">
         </div>
-      </div>
-      <!-- 종료일 -->
-      <div>
-        <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">구독 종료일</label>
-        <div id="sdEndDate" style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:4px 0"></div>
       </div>
       <!-- 이메일 (선택) -->
       <div>
@@ -2917,17 +2921,8 @@ function openSubDetail(id) {
   document.getElementById('sdInputStatus').value         = sub.status;
   document.getElementById('sdInputHour').value           = String(sub.send_hour || 8);
   const sdCd = new Date(sub.created_at);
-  document.getElementById('sdCreatedAt').innerHTML = `${sdCd.toLocaleDateString('ko-KR')} <span style="color:var(--gold)">${sdCd.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</span>`;
-  document.getElementById('sdEndDate').textContent       = sub.end_date
-    ? new Date(sub.end_date).toLocaleDateString('ko-KR')
-    : '—';
-  document.getElementById('sdInputEmail').value          = sub.email || '';
-  document.getElementById('sdInputMemo').value           = sub.memo  || '';
-
-  // 저장버튼 초기화
-  const btn = document.getElementById('sdSaveBtn');
-  if (btn) { btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer'; btn.textContent='💾 저장'; }
-
+  document.getElementById('sdInputStartDate').value = sdCd.toISOString().slice(0,10);
+  document.getElementById('sdInputEndDate').value   = sub.end_date ? new Date(sub.end_date).toISOString().slice(0,10) : '';
   document.getElementById('subDetailOverlay').classList.add('open');
 }
 
@@ -2948,8 +2943,12 @@ async function saveSubDetail() {
   sub.plan      = document.getElementById('sdInputPlan').value;
   sub.status    = document.getElementById('sdInputStatus').value;
   sub.send_hour = Number(document.getElementById('sdInputHour').value);
-  sub.email     = document.getElementById('sdInputEmail').value.trim()  || null;
-  sub.memo      = document.getElementById('sdInputMemo').value.trim()   || null;
+  sub.email    = document.getElementById('sdInputEmail').value.trim() || null;
+  sub.memo     = document.getElementById('sdInputMemo').value.trim()  || null;
+  const sdStart = document.getElementById('sdInputStartDate').value;
+  const sdEnd   = document.getElementById('sdInputEndDate').value;
+  if (sdStart) sub.created_at = sdStart + 'T00:00:00+09:00';
+  if (sdEnd)   sub.end_date   = sdEnd   + 'T23:59:59+09:00';
 
   if (API_BASE) {
     try {
