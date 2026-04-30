@@ -1342,7 +1342,7 @@ function loadKPIs() {
     '<span class="up">↑ ' + new7d + '명</span> 최근 7일');
   setKPI('kpi-paid',  paid.toLocaleString() + ' 명', 'green',
     '월간 ' + monthly + ' + 연간 ' + yearly);
-  setKPI('kpi-rev',   '₩ ' + Math.floor(rev).toLocaleString('ko-KR') + '원', 'blue', '이번 달 추정');
+  setKPI('kpi-rev',   '₩ ' + Math.floor(rev).toLocaleString('ko-KR'), 'blue', '이번 달 추정');
   setKPI('kpi-send', send.sent + ' 건', 'amber',
     '( 완료 ' + send.sent + ' · 실패 <span style="color:' + (send.failed>0?'var(--red)':'var(--muted)') + '">' + send.failed + ' )</span>');
 }
