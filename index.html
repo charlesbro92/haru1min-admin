@@ -1,0 +1,3367 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하루1분경제 — 관리자 대시보드</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg: #080807;
+  --s1: #0F0F0D;
+  --s2: #161614;
+  --s3: #1E1E1B;
+  --gold: #C9A84C;
+  --gold-d: rgba(201,168,76,0.1);
+  --b: rgba(201,168,76,0.15);
+  --text: #E0DDD4;
+  --muted: #77776F;
+  --green: #4ADE80;
+  --red: #F87171;
+  --blue: #60A5FA;
+  --amber: #FBBF24;
+  --sans: 'Noto Sans KR', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --sidebar: 220px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); display:flex; min-height:100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width:var(--sidebar); background:var(--s1);
+  border-right:1px solid var(--b); padding:0;
+  display:flex; flex-direction:column;
+  position:fixed; top:0; left:0; bottom:0; z-index:50;
+}
+.sb-logo {
+  padding:24px 20px 20px;
+  border-bottom:1px solid var(--b);
+  font-family:'Noto Serif KR',serif; font-size:15px; font-weight:700;
+  color:var(--gold); letter-spacing:-.3px;
+}
+.sb-logo small { display:block; font-size:10px; color:var(--muted); font-family:var(--sans); font-weight:400; margin-top:3px; letter-spacing:.5px; text-transform:uppercase; }
+.sb-nav { padding:12px 0; flex:1; overflow-y:auto; }
+.sb-group { font-size:10px; font-weight:700; letter-spacing:2px; color:var(--muted); text-transform:uppercase; padding:10px 20px 6px; }
+.sb-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 20px; font-size:13px; color:var(--muted);
+  cursor:pointer; transition:all .2s; border-left:2px solid transparent;
+  text-decoration:none;
+}
+.sb-item:hover { color:var(--text); background:rgba(255,255,255,.03); }
+.sb-item.active { color:var(--gold); background:var(--gold-d); border-left-color:var(--gold); }
+.sb-item .ico { font-size:15px; flex-shrink:0; }
+.sb-badge {
+  margin-left:auto; background:var(--red); color:#fff;
+  font-size:10px; font-weight:700; padding:2px 6px; border-radius:100px;
+  font-family:var(--mono);
+}
+.sb-bottom { padding:16px 20px; border-top:1px solid var(--b); }
+.sb-status { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+.status-dot { width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite; }
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── MAIN ── */
+.main { margin-left:var(--sidebar); flex:1; display:flex; flex-direction:column; }
+
+/* ── TOPBAR ── */
+.topbar {
+  height:58px; background:var(--s1); border-bottom:1px solid var(--b);
+  display:flex; align-items:center; justify-content:space-between; padding:0 28px;
+  position:sticky; top:0; z-index:40;
+}
+.page-title { font-size:15px; font-weight:700; }
+.topbar-right { display:flex; align-items:center; gap:12px; }
+.tb-time { font-family:var(--mono); font-size:12px; color:var(--muted); }
+.btn-send {
+  background:var(--gold); color:var(--bg); border:none;
+  padding:8px 16px; font-size:12px; font-weight:700; font-family:var(--sans);
+  border-radius:6px; cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; gap:6px;
+}
+.btn-send:hover { background:#e8c97a; }
+.btn-send:disabled { opacity:.5; cursor:not-allowed; }
+.btn-refresh {
+  background:var(--s2); border:1px solid var(--b); color:var(--muted);
+  padding:8px 14px; font-size:12px; font-family:var(--sans);
+  border-radius:6px; cursor:pointer; transition:all .2s;
+}
+.btn-refresh:hover { color:var(--text); border-color:var(--gold); }
+
+/* ── CONTENT AREA ── */
+.content { padding:28px; display:none; }
+.content.active { display:block; }
+
+/* ── KPI CARDS ── */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+.kpi {
+  background:var(--s2); border:1px solid var(--b); border-radius:12px;
+  padding:20px; position:relative; overflow:hidden; transition:border-color .3s;
+}
+.kpi:hover { border-color:rgba(201,168,76,.3); }
+.kpi-label { font-size:11px; color:var(--muted); letter-spacing:.5px; text-transform:uppercase; margin-bottom:10px; }
+.kpi-value { font-family:var(--mono); font-size:22px; font-weight:600; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right; }
+.kpi-value.gold { color:var(--gold); }
+.kpi-value.green { color:var(--green); }
+.kpi-value.blue { color:var(--blue); }
+.kpi-value.amber { color:var(--amber); }
+.kpi-value .kpi-num { font-size:24px; font-weight:700; }
+.kpi-value .kpi-unit { font-size:13px; font-weight:500; color:inherit; opacity:.75; margin-left:3px; }
+.kpi-change { font-size:11px; color:var(--muted); margin-top:6px; text-align:right; }
+.kpi-change .up { color:var(--green); }
+.kpi-change .dn { color:var(--red); }
+.kpi-icon { position:absolute; right:16px; top:16px; font-size:22px; opacity:.4; }
+
+/* ── 2-COL LAYOUT ── */
+.two-col { display:grid; grid-template-columns:1.4fr 1fr; gap:14px; margin-bottom:14px; }
+
+/* ── PANEL ── */
+.panel { background:var(--s2); border:1px solid var(--b); border-radius:12px; overflow:hidden; }
+.panel-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px; border-bottom:1px solid var(--b);
+}
+.panel-title { font-size:13px; font-weight:700; }
+.panel-act { font-size:11px; color:var(--gold); cursor:pointer; }
+.panel-body { padding:0; }
+
+/* ── TABLE ── */
+table { width:100%; border-collapse:collapse; font-size:12px; }
+th { font-size:10px; font-weight:700; letter-spacing:1px; color:var(--muted); text-transform:uppercase; padding:10px 16px; border-bottom:1px solid var(--b); text-align:left; background:var(--s1); }
+td { padding:10px 16px; border-bottom:1px solid rgba(255,255,255,.04); color:var(--muted); }
+td strong { color:var(--text); }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,.02); }
+.t-phone { font-family:var(--mono); font-size:11px; }
+
+/* ── STATUS BADGE ── */
+.badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; padding:3px 8px; border-radius:100px; font-family:var(--mono); }
+.badge.active { background:rgba(74,222,128,.1); color:var(--green); }
+.badge.trial  { background:rgba(251,191,36,.1);  color:var(--amber); }
+.badge.cancelled { background:rgba(248,113,113,.1); color:var(--red); }
+.badge.expired   { background:rgba(148,163,184,.1); color:#94A3B8; }
+.badge.monthly { background:rgba(96,165,250,.1); color:var(--blue); }
+.badge.yearly  { background:rgba(201,168,76,.1); color:var(--gold); }
+.badge.free    { background:rgba(255,255,255,.06); color:var(--muted); }
+.badge.success { background:rgba(74,222,128,.1); color:var(--green); }
+.badge.failed  { background:rgba(248,113,113,.1); color:var(--red); }
+.badge.pending { background:rgba(251,191,36,.1); color:var(--amber); }
+.badge-dot { width:5px;height:5px;border-radius:50%;background:currentColor; }
+
+/* ── SEND PROGRESS ── */
+.send-progress { padding:20px; }
+.prog-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.prog-label { font-size:13px; font-weight:700; }
+.prog-nums { font-family:var(--mono); font-size:12px; color:var(--muted); }
+.prog-bar { height:6px; background:var(--s3); border-radius:3px; overflow:hidden; margin-bottom:4px; }
+.prog-fill { height:100%; background:linear-gradient(to right,var(--gold),var(--green)); border-radius:3px; transition:width .8s ease; }
+.prog-meta { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); }
+
+/* ── CONTENT PREVIEW CARD ── */
+.content-card { padding:20px; }
+.cc-date { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+.cc-keyword { font-size:18px; font-weight:700; color:var(--gold); margin-bottom:6px; }
+.cc-preview { font-size:12px; color:var(--muted); line-height:1.7; white-space:pre-wrap; max-height:120px; overflow:hidden; }
+.cc-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+.cc-tag { background:var(--gold-d); border:1px solid var(--b); color:var(--gold); font-size:10px; padding:2px 8px; border-radius:4px; font-family:var(--mono); }
+
+/* ── REVENUE CHART ── */
+.rev-chart { padding:20px; }
+.rev-bars { display:flex; align-items:flex-end; gap:8px; height:100px; margin-bottom:8px; }
+.rev-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.rev-bar { width:100%; border-radius:4px 4px 0 0; background:linear-gradient(to top,var(--gold),rgba(201,168,76,.4)); transition:height .6s ease; min-height:2px; }
+.rev-bar-label { font-size:9px; color:var(--muted); font-family:var(--mono); }
+.rev-total { display:flex; justify-content:space-between; align-items:baseline; margin-top:12px; padding-top:12px; border-top:1px solid var(--b); }
+.rev-total-num { font-family:var(--mono); font-size:22px; font-weight:600; color:var(--gold); }
+.rev-total-label { font-size:11px; color:var(--muted); }
+
+/* ── SEND LOG MINI CHART ── */
+.mini-bars { display:flex; gap:3px; align-items:flex-end; height:32px; }
+.mini-bar { flex:1; border-radius:2px 2px 0 0; background:var(--gold-d); transition:all .4s; }
+.mini-bar.ok { background:rgba(74,222,128,.4); }
+.mini-bar.fail { background:rgba(248,113,113,.4); }
+
+/* ── SKELETON ── */
+.skel { background:linear-gradient(90deg,var(--s2),var(--s3),var(--s2)); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:4px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ── EMPTY ── */
+.empty { padding:40px; text-align:center; color:var(--muted); font-size:13px; }
+.empty-ico { font-size:32px; margin-bottom:8px; display:block; }
+
+/* ── ALERT BANNER ── */
+.alert-banner {
+  display:flex; align-items:center; gap:12px; padding:12px 20px;
+  background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.2);
+  border-radius:8px; margin-bottom:14px; font-size:13px; color:#fca5a5;
+}
+.alert-banner.warn { background:rgba(251,191,36,.08); border-color:rgba(251,191,36,.2); color:var(--amber); }
+
+/* ── MODAL ── */
+.overlay { position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s; }
+.overlay.open { opacity:1;pointer-events:all; }
+.modal { background:var(--s2);border:1px solid var(--b);border-radius:16px;padding:32px;width:100%;max-width:440px;transform:translateY(16px);transition:transform .3s; }
+.overlay.open .modal { transform:translateY(0); }
+.m-title { font-size:18px;font-weight:700;margin-bottom:8px; }
+.m-desc { font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.7; }
+.m-btns { display:flex;gap:10px;margin-top:20px; }
+.m-btn { flex:1;padding:11px;border-radius:8px;font-size:13px;font-weight:700;font-family:var(--sans);cursor:pointer;border:1px solid var(--b);background:transparent;color:var(--muted);transition:all .2s; }
+.m-btn.primary { background:var(--gold);color:var(--bg);border-color:var(--gold); }
+.m-btn:hover { color:var(--text); }
+
+/* ── TOAST ── */
+.toast { position:fixed;bottom:24px;right:24px;background:var(--s2);border:1px solid var(--b);color:var(--text);padding:12px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:all .3s;z-index:999;max-width:320px; }
+.toast.show { opacity:1; }
+.toast.ok { border-color:var(--green); }
+.toast.ng { border-color:var(--red); }
+
+/* ── SPINNER ── */
+.spin { display:inline-block;width:13px;height:13px;border:2px solid rgba(0,0,0,.25);border-top-color:#000;border-radius:50%;animation:sp .6s linear infinite; }
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── 발송 상세 패널 ── */
+.send-detail-panel {
+  margin-top:14px;
+  background:var(--s2); border:1px solid var(--b); border-radius:12px; overflow:hidden;
+  animation:slideDown .25s ease;
+}
+@keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+.sdp-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px; border-bottom:1px solid var(--b);
+  background:var(--s1);
+}
+.sdp-head-left { display:flex; align-items:center; gap:10px; }
+.sdp-date { font-size:13px; font-weight:700; }
+.sdp-kpis { display:flex; gap:16px; }
+.sdp-kpi { font-size:11px; color:var(--muted); }
+.sdp-kpi span { font-family:var(--mono); font-weight:600; margin-left:4px; }
+.sdp-kpi span.ok  { color:var(--green); }
+.sdp-kpi span.ng  { color:var(--red); }
+.sdp-tabs { display:flex; border-bottom:1px solid var(--b); }
+.sdp-tab {
+  padding:10px 20px; font-size:12px; font-weight:600; cursor:pointer;
+  color:var(--muted); border-bottom:2px solid transparent; transition:all .2s;
+}
+.sdp-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.sdp-tab:hover:not(.active) { color:var(--text); }
+.sdp-body { max-height:360px; overflow-y:auto; }
+.sdp-body table th { position:sticky; top:0; z-index:1; }
+.resend-btn {
+  background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.25);
+  color:var(--red); padding:3px 10px; border-radius:4px; font-size:10px;
+  font-weight:700; cursor:pointer; font-family:var(--sans); transition:all .2s;
+  white-space:nowrap;
+}
+.resend-btn:hover { background:rgba(248,113,113,.2); }
+.resend-btn:disabled { opacity:.4; cursor:not-allowed; }
+.resend-all-btn {
+  background:rgba(248,113,113,.12); border:1px solid rgba(248,113,113,.3);
+  color:var(--red); padding:6px 14px; border-radius:6px; font-size:11px;
+  font-weight:700; cursor:pointer; font-family:var(--sans); transition:all .2s;
+  display:flex; align-items:center; gap:6px;
+}
+.resend-all-btn:hover { background:rgba(248,113,113,.22); }
+
+/* ── 재발송 미리보기 모달 ── */
+.rp-modal {
+  background:var(--s2); border:1px solid var(--b); border-radius:18px;
+  width:100%; max-width:560px; max-height:90vh; overflow-y:auto;
+  transform:translateY(20px); transition:transform .3s; position:relative;
+}
+.overlay.open .rp-modal { transform:translateY(0); }
+.rp-header {
+  padding:22px 24px 16px; border-bottom:1px solid var(--b);
+  display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+}
+.rp-header-info { flex:1; }
+.rp-title { font-size:16px; font-weight:700; margin-bottom:4px; }
+.rp-meta  { font-size:12px; color:var(--muted); display:flex; gap:12px; flex-wrap:wrap; }
+.rp-meta span { display:flex; align-items:center; gap:4px; }
+.rp-body  { padding:20px 24px; }
+.rp-section-label {
+  font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--muted); margin-bottom:8px;
+}
+/* 카카오 미리보기 박스 */
+.kakao-preview-box {
+  background:#b2b2b2; border-radius:14px; padding:14px;
+  margin-bottom:16px;
+}
+.kpb-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.kpb-avatar {
+  width:32px; height:32px; background:var(--gold); border-radius:8px;
+  display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;
+}
+.kpb-name  { font-size:12px; font-weight:700; color:#111; }
+.kpb-time  { font-size:10px; color:#666; }
+.kpb-bubble {
+  background:#fff; border-radius:3px 12px 12px 12px;
+  padding:12px 14px; font-size:12.5px; line-height:1.7; color:#222;
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+/* 편집 textarea */
+.rp-editor {
+  width:100%; background:rgba(255,255,255,.04); border:1.5px solid var(--b);
+  border-radius:10px; padding:14px 16px; font-size:13px; color:var(--text);
+  font-family:var(--sans); line-height:1.75; resize:vertical; min-height:180px;
+  outline:none; transition:border-color .2s;
+}
+.rp-editor:focus { border-color:var(--gold); background:rgba(201,168,76,.04); }
+.rp-char-count { font-size:11px; color:var(--muted); text-align:right; margin-top:4px; }
+.rp-char-count.over { color:var(--red); }
+.rp-footer {
+  padding:16px 24px; border-top:1px solid var(--b);
+  display:flex; gap:10px; align-items:center;
+}
+.rp-footer .hint { font-size:11px; color:var(--muted); flex:1; line-height:1.5; }
+.rp-btn {
+  padding:10px 22px; border-radius:8px; font-size:13px; font-weight:700;
+  font-family:var(--sans); cursor:pointer; transition:all .2s; border:none;
+  white-space:nowrap;
+}
+.rp-btn.cancel { background:var(--s3); color:var(--muted); border:1px solid var(--b); }
+.rp-btn.cancel:hover { color:var(--text); }
+.rp-btn.send { background:var(--gold); color:var(--bg); }
+.rp-btn.send:hover { background:#e8c97a; }
+.rp-btn.send:disabled { opacity:.5; cursor:not-allowed; }
+.tab-row { display:flex; border-bottom:1px solid var(--b); margin-bottom:14px; }
+.tab-btn {
+  padding:8px 16px; font-size:12px; font-weight:600; cursor:pointer;
+  color:var(--muted); border-bottom:2px solid transparent; transition:all .2s;
+  font-family:var(--sans); background:none; border-top:none; border-left:none; border-right:none;
+}
+.tab-btn.active { color:var(--gold); border-bottom-color:var(--gold); }
+.tab-btn:hover:not(.active) { color:var(--text); }
+
+/* ── 시간 피커 버튼 ── */
+.hp-btn {
+  flex:1; padding:12px 6px; border-radius:8px; font-size:12px; font-weight:600; line-height:1.4;
+  font-family:var(--sans); cursor:pointer; text-align:center; transition:all .2s;
+  background:var(--s3); border:1.5px solid var(--b); color:var(--muted);
+}
+.hp-btn.active { background:var(--gold-d); border-color:var(--gold); color:var(--gold); }
+.hp-btn:hover:not(.active) { border-color:rgba(201,168,76,.3); color:var(--text); }
+
+/* ── 로그인 화면 ── */
+#loginScreen {
+  position:fixed; inset:0; z-index:9999;
+  background:var(--bg);
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  gap:0;
+}
+.login-logo-wrap {
+  cursor:pointer; user-select:none;
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  margin-bottom:48px;
+}
+.login-logo-img {
+  width:80px; height:80px;
+  background:linear-gradient(135deg,var(--gold),rgba(201,168,76,.4));
+  border-radius:22px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:38px;
+  box-shadow:0 0 0 0 rgba(201,168,76,.3);
+  transition:all .2s;
+}
+.login-logo-img.pulse { animation:loginPulse .4s ease; }
+@keyframes loginPulse { 0%{transform:scale(1)} 50%{transform:scale(1.1);box-shadow:0 0 0 12px rgba(201,168,76,.15)} 100%{transform:scale(1)} }
+.login-logo-text { font-family:'Noto Serif KR',serif; font-size:22px; font-weight:700; color:var(--gold); }
+.login-logo-sub  { font-size:11px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+
+.login-box {
+  background:var(--s2); border:1px solid var(--b); border-radius:16px;
+  padding:32px 36px; width:340px;
+}
+.login-field { margin-bottom:14px; }
+.login-field label { display:block; font-size:11px; color:var(--muted); margin-bottom:5px; letter-spacing:.3px; }
+.login-field input {
+  width:100%; background:rgba(255,255,255,.04); border:1.5px solid var(--b);
+  border-radius:8px; padding:12px 16px; font-size:15px; color:var(--text);
+  font-family:var(--sans); outline:none; transition:border-color .2s;
+}
+.login-field input:focus { border-color:var(--gold); }
+.login-field input.err { border-color:var(--red); }
+.login-btn {
+  width:100%; background:var(--gold); color:var(--bg); border:none;
+  padding:13px; font-size:14px; font-weight:700; font-family:var(--sans);
+  border-radius:9px; cursor:pointer; margin-top:4px; transition:all .2s;
+}
+.login-btn:hover { background:#e8c97a; }
+.login-err { font-size:12px; color:var(--red); text-align:center; margin-top:8px; display:none; }
+.pw-field-wrap { display:none; }
+
+/* ── 커스텀 툴팁 ── */
+.tip-wrap {
+  position:relative; display:inline-flex; align-items:center; gap:4px;
+  cursor:default; max-width:100%;
+}
+.tip-text {
+  font-size:10px; color:var(--muted); white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; max-width:130px;
+}
+.tip-icon {
+  flex-shrink:0; width:14px; height:14px; border-radius:50%;
+  background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.3);
+  color:var(--gold); font-size:9px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  cursor:help; transition:background .2s;
+}
+.tip-icon:hover { background:rgba(201,168,76,.3); }
+.tip-bubble {
+  display:none;
+  position:absolute; bottom:calc(100% + 8px); left:50%;
+  transform:translateX(-50%);
+  background:var(--s1); border:1px solid var(--b);
+  border-radius:8px; padding:10px 13px;
+  font-size:11px; color:var(--text); line-height:1.6;
+  width:240px; white-space:normal; z-index:999;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+  pointer-events:none;
+}
+/* 말풍선 화살표 */
+.tip-bubble::after {
+  content:''; position:absolute; top:100%; left:50%;
+  transform:translateX(-50%);
+  border:5px solid transparent;
+  border-top-color:var(--b);
+}
+.tip-bubble::before {
+  content:''; position:absolute; top:100%; left:50%;
+  transform:translateX(-50%) translateY(-1px);
+  border:5px solid transparent;
+  border-top-color:var(--s1);
+  z-index:1;
+}
+.tip-wrap:hover .tip-bubble { display:block; animation:tipFadeIn .15s ease; }
+@keyframes tipFadeIn { from{opacity:0;transform:translateX(-50%) translateY(4px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+/* 화면 왼쪽 끝 처리: 툴팁이 왼쪽으로 치우치지 않게 */
+.tip-wrap.tip-left .tip-bubble { left:0; transform:none; }
+.tip-wrap.tip-left .tip-bubble::after,
+.tip-wrap.tip-left .tip-bubble::before { left:20px; }
+
+/* ── 캘린더 빠른선택 버튼 ── */
+.cal-quick-btn {
+  padding:5px 12px; border-radius:6px; font-size:11px; font-weight:600;
+  font-family:var(--sans); cursor:pointer; transition:all .2s;
+  background:var(--s3); border:1px solid var(--b); color:var(--muted);
+}
+.cal-quick-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+@media(max-width:900px) {
+  .sidebar { transform:translateX(-100%); }
+  .main { margin-left:0; }
+  .kpi-grid { grid-template-columns:repeat(2,1fr); }
+  .two-col { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- 로그인 화면 -->
+<div id="loginScreen">
+  <div class="login-logo-wrap" onclick="handleLogoClick()" id="loginLogoWrap">
+    <div class="login-logo-img" id="loginLogoImg">📊</div>
+    <div class="login-logo-text">하루1분경제</div>
+    <div class="login-logo-sub">Admin Dashboard</div>
+
+  </div>
+  <div class="login-box">
+    <div class="login-field">
+      <label>관리자 아이디</label>
+      <input type="text" id="loginId" placeholder="아이디 입력" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <!-- 비밀번호: 로고 5번 클릭 후 활성화 -->
+    <div class="pw-field-wrap login-field" id="pwFieldWrap">
+      <label>비밀번호</label>
+      <input type="password" id="loginPw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-err" id="loginErr">아이디 또는 비밀번호가 올바르지 않습니다</div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">하루1분경제<small>Admin Dashboard</small></div>
+  <nav class="sb-nav">
+    <div class="sb-group">운영</div>
+    <a class="sb-item active" onclick="showPage('overview')"><span class="ico">📊</span>개요</a>
+    <a class="sb-item" onclick="showPage('subscribers');countSubIconClick()" id="sbSubscribers"><span class="ico">👥</span>구독자</a>
+    <a class="sb-item" onclick="showPage('send')"><span class="ico">📨</span>발송 현황<span class="sb-badge" id="failBadge" style="display:none;font-size:9px;letter-spacing:0;padding:2px 5px" title="오늘 실패/총 실패"></span></a>
+    <a class="sb-item" onclick="showPage('content')"><span class="ico">📝</span>콘텐츠</a>
+    <div class="sb-group">수익</div>
+    <a class="sb-item" onclick="showPage('revenue')"><span class="ico">💰</span>매출</a>
+    <a class="sb-item" onclick="showPage('payments')"><span class="ico">💳</span>결제 이력</a>
+    <div class="sb-group">설정</div>
+    <a class="sb-item" onclick="showPage('settings')"><span class="ico">⚙️</span>설정</a>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-status"><span class="status-dot"></span>서버 정상 운영중</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="page-title" id="pageTitle">📊 개요</div>
+    <div class="topbar-right">
+      <span class="tb-time" id="clock">--:--:--</span>
+      <button class="btn-refresh" onclick="loadAll()">↻ 새로고침</button>
+      <button class="btn-send" id="sendNowBtn" onclick="confirmSendNow()">
+        <span>📤</span> 지금 발송
+      </button>
+    </div>
+  </header>
+
+  <!-- ── PAGE: 개요 ── -->
+  <div class="content active" id="page-overview">
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi"><div class="kpi-label">전체 구독자</div><div class="kpi-value gold skel" style="width:80px;height:32px" id="kpi-total"></div><div class="kpi-change" id="kpi-total-ch"></div><span class="kpi-icon">👥</span></div>
+      <div class="kpi"><div class="kpi-label">유료 구독</div><div class="kpi-value green skel" style="width:80px;height:32px" id="kpi-paid"></div><div class="kpi-change" id="kpi-paid-ch"></div><span class="kpi-icon">💳</span></div>
+      <div class="kpi"><div class="kpi-label">이번 달 매출</div><div class="kpi-value blue skel" style="width:80px;height:32px" id="kpi-rev"></div><div class="kpi-change" id="kpi-rev-ch"></div><span class="kpi-icon">💰</span></div>
+      <div class="kpi"><div class="kpi-label">오늘 발송</div><div class="kpi-value amber skel" style="width:80px;height:32px" id="kpi-send"></div><div class="kpi-change" id="kpi-send-ch"></div><span class="kpi-icon">📨</span></div>
+    </div>
+
+    <div class="two-col">
+      <!-- 오늘 발송 현황 -->
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">📨 오늘 발송 현황</div><span class="panel-act" id="sendRefreshBtn" onclick="refreshSendPanel(this)">새로고침</span></div>
+        <div class="send-progress" id="sendProgress">
+          <div class="prog-row"><div class="prog-label">발송 진행률</div><div class="prog-nums" id="progNums">--/--</div></div>
+          <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+          <div class="prog-meta"><span id="progSuccess">성공 --</span><span id="progFailed" style="color:var(--red)">실패 --</span><span id="progPending">대기 --</span></div>
+          <div style="margin-top:16px">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px">최근 7일 발송 추이</div>
+            <div class="mini-bars" id="miniBars"></div>
+          </div>
+          <div style="margin-top:16px;border-top:1px solid var(--b);padding-top:14px">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px">⏰ 시간별 오늘 발송 현황</div>
+            <div id="hourBreakdown" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 오늘의 콘텐츠 -->
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">📝 오늘의 콘텐츠</div><span class="panel-act" id="regenBtn" onclick="showPage('content')">다시 생성</span></div>
+        <div class="content-card" id="todayContent"
+          style="max-height:320px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--b) transparent">
+          <div class="cc-date skel" style="width:80px;height:10px;margin-bottom:10px"></div>
+          <div class="cc-keyword skel" style="width:140px;height:18px;margin-bottom:8px"></div>
+          <div class="cc-preview skel" style="width:100%;height:80px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 최근 가입자 -->
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">🆕 최근 가입자</div><span class="panel-act" onclick="showPage('subscribers')">전체 보기</span></div>
+      <div class="panel-body" id="recentSubs">
+        <table>
+          <thead><tr><th>이름</th><th>전화번호</th><th>플랜</th><th>상태</th><th>가입시각</th><th>가입일</th></tr></thead>
+          <tbody id="recentSubsBody"><tr><td colspan="5"><div class="empty"><span class="empty-ico">⏳</span>불러오는 중...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: 구독자 ── -->
+  <div class="content" id="page-subscribers">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--muted)" id="subPageTitle"></div>
+      <div id="subAdminToolbar" style="display:none;gap:8px">
+        <button onclick="openAddSubscriber()" style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);color:var(--green);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:var(--sans);cursor:pointer">+ 구독자 추가</button>
+        <button onclick="deleteSelectedSubs()" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:var(--red);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:var(--sans);cursor:pointer">🗑 선택 삭제</button>
+        <button onclick="saveSubChanges()" style="background:var(--gold);border:none;color:var(--bg);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:var(--sans);cursor:pointer">💾 저장</button>
+      </div>
+    </div>
+    <!-- 검색 + 필터 + 선택 발송 -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+      <div style="position:relative;flex:1;min-width:180px">
+        <input type="text" id="subSearch"
+          placeholder="이름 또는 전화번호 검색..."
+          oninput="loadSubscribers()"
+          style="width:100%;background:var(--s2);border:1px solid var(--b);color:var(--text);
+                 padding:8px 12px 8px 34px;font-size:12px;border-radius:6px;font-family:var(--sans);outline:none">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px">🔍</span>
+      </div>
+      <select id="subFilter" onchange="loadSubscribers()" style="background:var(--s2);border:1px solid var(--b);color:#E0DDD4;padding:8px 14px;font-size:12px;border-radius:6px;font-family:var(--sans);outline:none">
+        <option value="">전체 상태</option>
+        <option value="trial">체험중</option>
+        <option value="active">유료</option>
+        <option value="cancelled">해지</option>
+      </select>
+      <select id="hourFilter" onchange="loadSubscribers()" style="background:var(--s2);border:1px solid var(--b);color:#E0DDD4;padding:8px 14px;font-size:12px;border-radius:6px;font-family:var(--sans);outline:none">
+        <option value="">전체 시간</option>
+        <option value="7">오전 7시</option>
+        <option value="8">오전 8시</option>
+        <option value="9">오전 9시</option>
+      </select>
+      <span id="bulkCount" style="font-size:11px;color:var(--muted);white-space:nowrap">0명 선택</span>
+      <button onclick="sendToSelected()"
+        style="background:var(--gold);color:var(--bg);border:none;padding:7px 14px;
+               border-radius:5px;font-size:11px;font-weight:700;font-family:var(--sans);cursor:pointer"
+        onmouseover="this.style.background='#e8c97a'" onmouseout="this.style.background='var(--gold)'">📤 선택 발송</button>
+      <div style="font-size:12px;color:var(--muted);white-space:nowrap" id="subCount"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-body" id="subTableWrap">
+        <table>
+          <thead><tr>
+            <th style="width:36px"><input type="checkbox" id="checkAll" onclick="toggleCheckAll(this)"
+              style="accent-color:var(--gold);cursor:pointer;width:14px;height:14px"></th>
+            <th>이름</th><th>전화번호</th><th>플랜</th><th>상태</th><th>발송시간</th><th>가입시각</th><th>시작일</th><th>종료일</th><th>이메일</th><th>메모</th><th>작업</th>
+          </tr></thead>
+          <tbody id="subTableBody"><tr><td colspan="12"><div class="empty"><span class="empty-ico">👥</span>구독자가 없습니다</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="subPagination" style="display:flex;justify-content:center;gap:8px;margin-top:14px"></div>
+  </div>
+
+  <!-- ── PAGE: 발송 현황 ── -->
+  <div class="content" id="page-send">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-head">
+        <div class="panel-title">📊 일별 발송 통계</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="date" id="sendDateFrom" onchange="loadSendHistory()"
+            style="background:var(--s3);border:1px solid var(--b);color:var(--text);padding:5px 8px;font-size:11px;border-radius:6px;font-family:var(--sans);outline:none;color-scheme:dark">
+          <span style="color:var(--muted);font-size:11px">~</span>
+          <input type="date" id="sendDateTo" onchange="loadSendHistory()"
+            style="background:var(--s3);border:1px solid var(--b);color:var(--text);padding:5px 8px;font-size:11px;border-radius:6px;font-family:var(--sans);outline:none;color-scheme:dark">
+          <button onclick="resetSendFilter()"
+            style="background:none;border:1px solid var(--b);color:var(--muted);padding:5px 8px;border-radius:6px;font-size:11px;font-family:var(--sans);cursor:pointer"
+            onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">초기화</button>
+          <span style="font-size:11px;color:var(--muted)">행 클릭 → 상세</span>
+        </div>
+      </div>
+      <div class="panel-body" id="sendHistory">
+        <table>
+          <thead><tr><th>날짜</th><th>전체</th><th>성공</th><th>실패</th><th>성공률</th><th></th></tr></thead>
+          <tbody id="sendHistBody"><tr><td colspan="6"><div class="empty"><span class="empty-ico">📨</span>데이터 없음</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- 상세 패널: 날짜 클릭 시 동적 생성 -->
+    <div id="sendDetailPanel"></div>
+  </div>
+
+  <!-- ── PAGE: 콘텐츠 ── -->
+  <div class="content" id="page-content">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">📝 콘텐츠 아카이브</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="contentCatFilter" onchange="loadContentArchive()"
+            style="background:var(--s2);border:1px solid var(--b);color:var(--text);
+                   padding:6px 10px;font-size:11px;border-radius:6px;
+                   font-family:var(--sans);outline:none;-webkit-appearance:none">
+            <option value="">전체 카테고리</option>
+            <option value="macro">거시경제</option>
+            <option value="industry">산업트렌드</option>
+            <option value="finance">금융·환율</option>
+            <option value="global">글로벌</option>
+            <option value="startup">창업·비즈</option>
+            <option value="special">머니인사이트</option>
+          </select>
+          <button class="btn-send" onclick="openCalendarPicker()" style="font-size:11px;padding:7px 12px">📅 생성</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>날짜</th><th>카테고리</th><th>키워드</th><th>미리보기</th><th>토큰</th></tr></thead>
+          <tbody id="contentBody"><tr><td colspan="5"><div class="empty"><span class="empty-ico">📝</span>생성된 콘텐츠가 없습니다</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: 매출 ── -->
+  <div class="content" id="page-revenue">
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="kpi"><div class="kpi-label">이번 달 매출</div><div class="kpi-value gold" id="revMonth">₩0</div><span class="kpi-icon">💰</span></div>
+      <div class="kpi"><div class="kpi-label">이번 달 신규 결제</div><div class="kpi-value green" id="revCount">0건</div><span class="kpi-icon">💳</span></div>
+      <div class="kpi"><div class="kpi-label">누적 총 매출</div><div class="kpi-value blue" id="revTotal">₩0</div><span class="kpi-icon">📈</span></div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <div class="panel-head"><div class="panel-title">📈 월별 매출 추이</div></div>
+      <div class="rev-chart" id="revChart">
+        <div class="rev-bars" id="revBars">
+          <div style="color:var(--muted);font-size:13px;padding:20px">매출 데이터를 불러오는 중...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: 결제 이력 ── -->
+  <div class="content" id="page-payments">
+    <div class="panel">
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>일시</th><th>구독자</th><th>플랜</th><th>금액</th><th>상태</th><th>주문번호</th></tr></thead>
+          <tbody id="payBody"><tr><td colspan="6"><div class="empty"><span class="empty-ico">💳</span>결제 이력이 없습니다</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: 설정 ── -->
+  <div class="content" id="page-settings">
+    <div class="panel" style="max-width:560px">
+      <div class="panel-head"><div class="panel-title">⚙️ 서비스 설정</div></div>
+      <div style="padding:24px;display:flex;flex-direction:column;gap:18px">
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">API 서버 URL</label>
+          <input type="text" id="cfgApi" placeholder="https://your-api.railway.app" style="width:100%;background:var(--s3);border:1px solid var(--b);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:var(--mono);outline:none">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">기본 발송 시간 (KST)</label>
+          <select id="cfgHour" style="width:100%;background:var(--s3);border:1px solid var(--b);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:var(--sans);outline:none;-webkit-appearance:none">
+            <option value="7">오전 7시</option>
+            <option value="8" selected>오전 8시</option>
+            <option value="9">오전 9시</option>
+          </select>
+        </div>
+        <button onclick="saveSettings()" style="background:var(--gold);color:var(--bg);border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:700;font-family:var(--sans);cursor:pointer;transition:all .2s" onmouseover="this.style.background='#e8c97a'" onmouseout="this.style.background='var(--gold)'">설정 저장</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- 콘텐츠 상세 팝업 -->
+<div class="overlay" id="contentPopup" onclick="if(event.target.id==='contentPopup')closeContentPopup()">
+  <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto;padding:0">
+
+    <!-- 헤더: 날짜·키워드 + 편집 토글 + 닫기 -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;
+                padding:18px 20px 14px;border-bottom:1px solid var(--b);gap:12px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;
+                    color:var(--muted);margin-bottom:3px" id="cpDate"></div>
+        <div style="font-size:17px;font-weight:700;color:var(--gold);
+                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="cpKeyword"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <!-- 편집 토글 버튼 (작고 조용하게) -->
+        <button id="cpEditToggle" onclick="toggleCpEdit()"
+          style="display:flex;align-items:center;gap:4px;
+                 background:rgba(255,255,255,.05);border:1px solid var(--b);
+                 color:var(--muted);border-radius:6px;padding:5px 10px;
+                 font-size:11px;font-weight:600;font-family:var(--sans);
+                 cursor:pointer;transition:all .2s;white-space:nowrap">
+          <span id="cpEditToggleIco">✏️</span>
+          <span id="cpEditToggleTxt">편집</span>
+        </button>
+        <button onclick="closeContentPopup()"
+          style="background:none;border:none;color:var(--muted);font-size:17px;
+                 cursor:pointer;padding:4px;transition:color .2s;line-height:1"
+          onmouseover="this.style.color='var(--text)'"
+          onmouseout="this.style.color='var(--muted)'">✕</button>
+      </div>
+    </div>
+
+    <!-- 본문 영역 -->
+    <div style="padding:16px 20px">
+
+      <!-- 제목 (읽기/편집 전환) -->
+      <div id="cpHeadlineView"
+        style="font-size:13px;font-weight:600;color:var(--text);
+               line-height:1.5;margin-bottom:14px;padding-bottom:12px;
+               border-bottom:1px solid var(--b)" id="cpHeadlineView"></div>
+      <input id="cpHeadline" type="text"
+        style="display:none;width:100%;background:rgba(255,255,255,.04);
+               border:1.5px solid var(--gold);border-radius:8px;
+               padding:8px 12px;font-size:13px;font-weight:600;color:var(--text);
+               font-family:var(--sans);outline:none;margin-bottom:12px">
+
+      <!-- 카카오 미리보기 (항상 표시) -->
+      <div style="background:#b5b5b5;border-radius:14px;padding:12px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="width:30px;height:30px;background:var(--gold);border-radius:8px;
+                      display:flex;align-items:center;justify-content:center;font-size:15px">📈</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#111">하루1분경제</div>
+            <div style="font-size:10px;color:#666">오전 8:00</div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:3px 12px 12px 12px;padding:12px 14px">
+          <pre id="cpBody"
+            style="font-family:inherit;font-size:12.5px;color:#222;
+                   line-height:1.75;white-space:pre-wrap;word-break:break-word;margin:0"></pre>
+        </div>
+      </div>
+
+      <!-- 편집 패널 (접었다 펼침) -->
+      <div id="cpEditPane" style="display:none;margin-top:12px">
+        <textarea id="cpEditor"
+          oninput="onCpEditorInput(this.value)"
+          style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);
+                 border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--text);
+                 font-family:var(--sans);line-height:1.75;resize:vertical;
+                 min-height:160px;outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--gold)'"
+          onblur="this.style.borderColor='var(--b)'"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <div id="cpCharCount" style="font-size:10px;color:var(--muted)">0자</div>
+          <!-- 저장 버튼 (편집 패널 안, 작게) -->
+          <button id="cpSaveBtn" onclick="saveContentEdit()"
+            style="display:flex;align-items:center;gap:4px;
+                   background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);
+                   color:var(--green);border-radius:6px;padding:5px 12px;
+                   font-size:11px;font-weight:700;font-family:var(--sans);
+                   cursor:pointer;transition:all .3s">
+            <span id="cpSaveIco">💾</span>
+            <span id="cpSaveTxt">저장</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 태그 -->
+      <div class="cc-tags" id="cpTags" style="margin-top:12px"></div>
+    </div>
+
+    <!-- 푸터: 닫기 + 발송 -->
+    <div style="display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--b)">
+      <button class="m-btn" onclick="closeContentPopup()" style="flex:1">닫기</button>
+      <button class="m-btn primary" onclick="saveContentEdit();closeContentPopup();confirmSendNow()"
+        style="flex:1">📤 발송</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- 재발송 미리보기 모달 -->
+<div class="overlay" id="resendPreviewOverlay" onclick="if(event.target.id==='resendPreviewOverlay')closeResendPreview()">
+  <div class="rp-modal">
+    <!-- 헤더 -->
+    <div class="rp-header">
+      <div class="rp-header-info">
+        <div class="rp-title">📤 재발송 미리보기</div>
+        <div class="rp-meta">
+          <span id="rpRecipient">👤 수신자</span>
+          <span id="rpDate">📅 날짜</span>
+          <span id="rpError" style="color:var(--red)">⚠️ 오류</span>
+        </div>
+      </div>
+      <button onclick="closeResendPreview()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;transition:color .2s;flex-shrink:0" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+    </div>
+
+    <!-- 탭: 미리보기 / 편집 -->
+    <div class="rp-body">
+      <div class="tab-row">
+        <button class="tab-btn active" id="rpTab1" onclick="switchRpTab('preview')">카카오 미리보기</button>
+        <button class="tab-btn" id="rpTab2" onclick="switchRpTab('edit')">내용 편집</button>
+      </div>
+
+      <!-- 미리보기 탭 -->
+      <div id="rpPreviewTab">
+        <div class="rp-section-label">수신자에게 이렇게 보입니다</div>
+        <div class="kakao-preview-box">
+          <div class="kpb-header">
+            <div class="kpb-avatar">📈</div>
+            <div><div class="kpb-name">하루1분경제</div><div class="kpb-time">오전 8:02</div></div>
+          </div>
+          <div class="kpb-bubble"><pre id="rpPreviewBody" style="font-family:inherit;white-space:pre-wrap;word-break:break-word;font-size:12.5px;line-height:1.7;color:#222;margin:0"></pre></div>
+        </div>
+      </div>
+
+      <!-- 편집 탭 -->
+      <div id="rpEditTab" style="display:none">
+        <div class="rp-section-label">내용을 수정한 후 발송하세요</div>
+        <textarea class="rp-editor" id="rpEditor" oninput="syncRpPreview(this.value)"></textarea>
+        <div class="rp-char-count" id="rpCharCount">0자</div>
+      </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="rp-footer">
+      <div class="hint" id="rpHint">내용을 확인하고 발송 버튼을 눌러주세요.<br>편집 탭에서 내용을 수정할 수 있습니다.</div>
+      <button class="rp-btn cancel" onclick="closeResendPreview()">취소</button>
+      <button class="rp-btn send" id="rpSendBtn" onclick="executeResend()">
+        <span id="rpSendTxt">발송하기</span>
+        <span id="rpSendSpin" style="display:none"><span class="spin"></span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 구독자 추가 모달 -->
+<div class="overlay" id="addSubOverlay" onclick="if(event.target.id==='addSubOverlay')closeAddSubscriber()">
+  <div class="modal" style="max-width:460px;padding:0;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid var(--b)">
+      <div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">관리자 직접 등록</div><div style="font-size:16px;font-weight:700">구독자 추가</div></div>
+      <button onclick="closeAddSubscriber()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+    </div>
+    <div style="padding:18px 22px;display:flex;flex-direction:column;gap:13px">
+
+      <!-- 이름 -->
+      <div><label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">이름 *</label>
+        <input id="addSubName" type="text" placeholder="홍길동"
+          style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:14px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'"></div>
+
+      <!-- 전화번호: 하이픈 자동 포맷 + 숫자만 입력해도 인식 -->
+      <div><label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">카카오톡 전화번호 * <span style="color:var(--muted);font-weight:400">(하이픈 없이 숫자만 입력 가능)</span></label>
+        <input id="addSubPhone" type="tel" placeholder="01012345678 또는 010-1234-5678"
+          oninput="autoFmtPhone(this)"
+          style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:14px;color:var(--text);font-family:var(--mono);outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'"></div>
+
+      <!-- 플랜 + 발송 시간 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">구독 플랜 *</label>
+          <select id="addSubPlan" onchange="updateAddSubDates()"
+            style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:7px;padding:9px 10px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none">
+            <option value="free">무료 체험 (5일)</option>
+            <option value="monthly">월간 (30일)</option>
+            <option value="yearly">연간 (365일)</option>
+          </select></div>
+        <div><label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">발송 시간 *</label>
+          <select id="addSubHour"
+            style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:7px;padding:9px 10px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none">
+            <option value="7">오전 7시</option><option value="8" selected>오전 8시</option><option value="9">오전 9시</option>
+          </select></div>
+      </div>
+
+      <!-- 구독 시작일 + 종료일 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">구독 시작일 * <span style="color:var(--muted);font-weight:400">(00:00 고정)</span></label>
+          <input type="date" id="addSubStartDate"
+            style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:7px;padding:9px 10px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;color-scheme:dark"
+            onchange="updateAddSubEndDate()"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'"></div>
+        <div><label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">구독 종료일</label>
+          <input type="date" id="addSubEndDate"
+            style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:7px;padding:9px 10px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;color-scheme:dark"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'"></div>
+      </div>
+
+      <!-- 이메일 (선택) -->
+      <div><label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">이메일 <span style="font-weight:400">(선택)</span></label>
+        <input id="addSubEmail" type="email" placeholder="example@email.com"
+          style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'"></div>
+
+      <!-- 메모 -->
+      <div><label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">관리자 메모 <span style="font-weight:400">(선택)</span></label>
+        <input id="addSubMemo" type="text" placeholder="가입 경로, 특이사항 등"
+          style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'"></div>
+
+      <div id="addSubErr" style="font-size:11px;color:var(--red);display:none"></div>
+    </div>
+    <div style="display:flex;gap:8px;padding:12px 22px;border-top:1px solid var(--b)">
+      <button class="m-btn" onclick="closeAddSubscriber()" style="flex:1">취소</button>
+      <button class="m-btn primary" onclick="confirmAddSubscriber()" style="flex:1">추가하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 구독자 상세 팝업 -->
+<div class="overlay" id="subDetailOverlay" onclick="if(event.target.id==='subDetailOverlay')closeSubDetail()">
+  <div class="modal" style="max-width:480px;padding:0;max-height:90vh;overflow-y:auto">
+    <!-- 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid var(--b)">
+      <div>
+        <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">구독자 상세정보</div>
+        <div style="font-size:17px;font-weight:700" id="sdName"></div>
+      </div>
+      <button onclick="closeSubDetail()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;transition:color .2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+    </div>
+    <!-- 본문 -->
+    <div style="padding:18px 22px;display:flex;flex-direction:column;gap:13px">
+      <!-- 이름 / 전화번호 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">이름</label>
+          <input id="sdInputName" type="text"
+            style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">카카오톡 전화번호</label>
+          <input id="sdInputPhone" type="tel" oninput="autoFmtPhone(this)"
+            style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--mono);outline:none;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'">
+        </div>
+      </div>
+      <!-- 플랜 / 상태 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">구독 플랜</label>
+          <select id="sdInputPlan" style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none">
+            <option value="free">무료</option><option value="monthly">월간</option><option value="yearly">연간</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">상태</label>
+          <select id="sdInputStatus" style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none">
+            <option value="trial">체험중</option><option value="active">활성</option>
+            <option value="cancelled">해지</option><option value="expired">만료</option>
+          </select>
+        </div>
+      </div>
+      <!-- 발송시간 / 시작일 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">발송 시간</label>
+          <select id="sdInputHour" style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none">
+            <option value="7">오전 7시</option><option value="8">오전 8시</option><option value="9">오전 9시</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">구독 시작일 (KST 00:00)</label>
+          <div id="sdCreatedAt" style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:9px 0;line-height:1.6"></div>
+        </div>
+      </div>
+      <!-- 종료일 -->
+      <div>
+        <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">구독 종료일</label>
+        <div id="sdEndDate" style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:4px 0"></div>
+      </div>
+      <!-- 이메일 (선택) -->
+      <div>
+        <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">이메일 <span style="font-weight:400">(선택)</span></label>
+        <input id="sdInputEmail" type="email" placeholder="미입력 시 저장 안됨"
+          style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'">
+      </div>
+      <!-- 메모 (선택) -->
+      <div>
+        <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:4px">관리자 메모 <span style="font-weight:400">(선택)</span></label>
+        <textarea id="sdInputMemo" rows="2"
+          style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:7px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;resize:none;line-height:1.6;transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'"
+          placeholder="미입력 시 저장 안됨"></textarea>
+      </div>
+    </div>
+    <!-- 푸터 -->
+    <div style="display:flex;gap:8px;padding:12px 22px;border-top:1px solid var(--b)">
+      <button class="m-btn" onclick="closeSubDetail()" style="flex:1">닫기</button>
+      <button class="m-btn" id="sdSaveBtn" onclick="saveSubDetail()"
+        style="flex:1;background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.3);color:var(--gold)">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 선택 발송 모달 -->
+<div class="overlay" id="bulkSendOverlay" onclick="if(event.target.id==='bulkSendOverlay')closeBulkSend()">
+  <div class="modal" style="max-width:480px;padding:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid var(--b)">
+      <div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">선택 발송</div>
+        <div style="font-size:16px;font-weight:700" id="bulkSendTitle">0명에게 발송</div>
+      </div>
+      <button onclick="closeBulkSend()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;transition:color .2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+    </div>
+    <!-- 수신자 목록 -->
+    <div style="padding:14px 22px 0">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:.5px;margin-bottom:8px">수신자 목록</div>
+      <div id="bulkRecipientList" style="display:flex;flex-wrap:wrap;gap:6px;max-height:100px;overflow-y:auto;
+           background:rgba(255,255,255,.03);border:1px solid var(--b);border-radius:8px;padding:10px"></div>
+    </div>
+    <!-- 발송 내용 -->
+    <div style="padding:14px 22px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:.5px">발송 내용 <span style="color:var(--gold)">(오늘의 브리핑 기본 적용)</span></div>
+        <span style="font-size:10px;color:var(--muted)" id="bulkCharCount">0자</span>
+      </div>
+      <textarea id="bulkMsgEditor" rows="6"
+        oninput="document.getElementById('bulkCharCount').textContent=this.value.length+'자'"
+        style="width:100%;background:rgba(255,255,255,.04);border:1.5px solid var(--b);border-radius:10px;
+               padding:12px 14px;font-size:13px;color:var(--text);font-family:var(--sans);
+               line-height:1.75;resize:vertical;outline:none;transition:border-color .2s"
+        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;padding:14px 22px;border-top:1px solid var(--b);margin-top:14px">
+      <button class="m-btn" onclick="closeBulkSend()" style="flex:1">취소</button>
+      <button class="m-btn primary" id="bulkSendExecBtn" onclick="executeBulkSend()" style="flex:1">
+        <span id="bulkSendTxt">📤 발송하기</span>
+        <span id="bulkSendSpin" style="display:none"><span class="spin"></span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 날짜 범위 선택 캘린더 팝업 -->
+<div class="overlay" id="calendarPickerOverlay" onclick="if(event.target.id==='calendarPickerOverlay')closeCalendarPicker()">
+  <div class="modal" style="max-width:420px;padding:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid var(--b)">
+      <div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">콘텐츠 생성</div>
+        <div style="font-size:16px;font-weight:700">날짜 범위 선택</div>
+      </div>
+      <button onclick="closeCalendarPicker()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;transition:color .2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+    </div>
+    <div style="padding:18px 22px">
+      <!-- 날짜 입력 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:5px">시작일</label>
+          <input type="date" id="calStartDate"
+            style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:8px;
+                   padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;
+                   transition:border-color .2s;color-scheme:dark"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'"
+            onchange="updateCalPreview()">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);letter-spacing:.5px;display:block;margin-bottom:5px">종료일</label>
+          <input type="date" id="calEndDate"
+            style="width:100%;background:var(--s3);border:1.5px solid var(--b);border-radius:8px;
+                   padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;
+                   transition:border-color .2s;color-scheme:dark"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b)'"
+            onchange="updateCalPreview()">
+        </div>
+      </div>
+      <!-- 빠른 선택 버튼 -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+        <button onclick="setCalRange(0,0)" class="cal-quick-btn">오늘</button>
+        <button onclick="setCalRange(0,6)" class="cal-quick-btn">이번 주</button>
+        <button onclick="setCalRange(0,29)" class="cal-quick-btn">이번 달</button>
+        <button onclick="setCalRange(-6,0)" class="cal-quick-btn">최근 7일</button>
+        <button onclick="setCalRange(-29,0)" class="cal-quick-btn">최근 30일</button>
+      </div>
+      <!-- 선택 미리보기 -->
+      <div id="calPreview" style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);
+           border-radius:8px;padding:12px 14px;font-size:12px;color:var(--muted);min-height:44px;
+           display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+        날짜를 선택하면 생성할 콘텐츠 정보가 표시됩니다
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;padding:12px 22px;border-top:1px solid var(--b)">
+      <button class="m-btn" onclick="closeCalendarPicker()" style="flex:1">취소</button>
+      <button class="m-btn primary" id="calGenerateBtn" onclick="executeCalGenerate()" style="flex:1" disabled>
+        <span id="calGenerateTxt">📅 생성하기</span>
+        <span id="calGenerateSpin" style="display:none"><span class="spin"></span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 시간 변경 피커 모달 -->
+<div class="overlay" id="hourPickerOverlay" onclick="if(event.target.id==='hourPickerOverlay')closeHourPicker()">
+  <div class="modal" style="max-width:320px;padding:28px 24px">
+    <div class="m-title" style="font-size:16px">⏰ 발송 시간 변경</div>
+    <p class="m-desc" style="margin-bottom:18px"><strong id="hpName"></strong> 님의 메시지 발송 시간을 선택해 주세요.</p>
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <button id="hpBtn7"  class="hp-btn" onclick="selectHourPick(7)" >오전 7시</button>
+      <button id="hpBtn8"  class="hp-btn active" onclick="selectHourPick(8)">오전 8시<br><span style="font-size:9px;opacity:.6">기본</span></button>
+      <button id="hpBtn9"  class="hp-btn" onclick="selectHourPick(9)">오전 9시</button>
+    </div>
+    <button class="m-btn" onclick="closeHourPicker()" style="width:100%">취소</button>
+  </div>
+</div>
+
+<!-- 발송 확인 모달 -->
+<div class="overlay" id="sendConfirm">
+  <div class="modal">
+    <div class="m-title">📤 지금 발송하시겠습니까?</div>
+    <p class="m-desc">현재 활성 구독자 전체에게 오늘의 경제 브리핑을 즉시 발송합니다. 이미 받은 구독자는 중복 발송되지 않습니다.</p>
+    <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:12px 14px;margin:10px 0;font-size:12px;color:var(--muted);line-height:1.7">
+      💡 발송 전 구독자 목록을 확인하시겠습니까?<br>
+      <button onclick="closeSendConfirm();showPage('subscribers')" style="margin-top:6px;background:none;border:1px solid var(--b);color:var(--gold);padding:4px 12px;border-radius:5px;font-size:11px;font-family:var(--sans);cursor:pointer" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--b)'">👥 구독자 페이지로 이동</button>
+    </div>
+    <div class="m-btns">
+      <button class="m-btn" onclick="closeSendConfirm()">취소</button>
+      <button class="m-btn primary" onclick="executeSendNow()">발송하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 설정 ─────────────────────────────────────────────────────
+let API_BASE = localStorage.getItem('apiBase') || 'https://web-production-761cd.up.railway.app';
+let currentPage = 'overview';
+let subPage = 1;
+
+// ── 시계 ─────────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── 페이지 전환 ───────────────────────────────────────────────
+const pageTitles = {
+  overview:'📊 개요', subscribers:'👥 구독자 관리',
+  send:'📨 발송 현황', content:'📝 콘텐츠 관리',
+  revenue:'💰 매출 현황', payments:'💳 결제 이력', settings:'⚙️ 설정',
+};
+function showPage(name) {
+  document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.remove('active'));
+  event?.currentTarget?.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[name] || name;
+  currentPage = name;
+  loadPage(name);
+}
+
+function loadPage(name) {
+  if (name === 'overview')     { loadKPIs(); loadSendStatus(); loadTodayContent(); loadRecentSubs(); }
+  if (name === 'subscribers')  loadSubscribers();
+  if (name === 'send') {
+    // 기간 필터 기본값: KST 이번 달 1일 ~ 말일
+    const kstNow  = new Date(new Date().getTime() + 9*60*60*1000);
+    const yr      = kstNow.getUTCFullYear();
+    const mo      = String(kstNow.getUTCMonth()+1).padStart(2,'0');
+    const lastDay = new Date(Date.UTC(yr, kstNow.getUTCMonth()+1, 0)).getUTCDate();
+    const fromEl  = document.getElementById('sendDateFrom');
+    const toEl    = document.getElementById('sendDateTo');
+    if (fromEl && !fromEl.value) fromEl.value = yr + '-' + mo + '-01';
+    if (toEl   && !toEl.value)   toEl.value   = yr + '-' + mo + '-' + String(lastDay).padStart(2,'0');
+    loadSendHistory();
+  }
+  if (name === 'content')      loadContentArchive();
+  if (name === 'revenue')      loadRevenue();
+  if (name === 'payments')     loadPayments();
+  if (name === 'settings')     loadSettings();
+}
+function loadAll() { loadPage(currentPage); showToast('새로고침 완료', 'ok'); }
+
+// ── 개요 발송패널 새로고침 (로딩 표시 포함) ──────────────────
+async function refreshSendPanel(el) {
+  const orig = el.textContent;
+  el.textContent = '···';
+  el.style.pointerEvents = 'none';
+  await loadSendStatus();
+  await loadKPIs();  // KPI도 함께 갱신
+  el.textContent = orig;
+  el.style.pointerEvents = '';
+  showToast('발송 현황 갱신 완료', 'ok');
+}
+
+// ── API 유틸 ─────────────────────────────────────────────────
+async function apiFetch(path) {
+  if (!API_BASE) return null;  // 설정 전엔 모의 데이터 사용
+  const r = await fetch(API_BASE + path);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+async function apiPost(path, body={}) {
+  if (!API_BASE) return null;
+  const r = await fetch(API_BASE + path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+// ── 단일 STATE 객체 (모든 화면이 동일 데이터 참조) ──────────
+// ── localStorage 구독자 영구 저장 ──────────────────────────
+function loadSubsFromStorage() {
+  try { const s = localStorage.getItem('haru1min_subs'); return s ? JSON.parse(s) : []; }
+  catch(e) { return []; }
+}
+function saveSubsToStorage() {
+  try { localStorage.setItem('haru1min_subs', JSON.stringify(STATE.subscribers)); }
+  catch(e) {}
+}
+
+const STATE = {
+  subscribers: loadSubsFromStorage(),
+  // 실제 발송 횟수 (executeSendNow 호출 시에만 증가)
+  _todaySent:   0,
+  _todayFailed: 0,
+  get today_send() {
+    const active = this.subscribers.filter(s => ['active','trial'].includes(s.status));
+    const h7 = active.filter(s=>(s.send_hour||8)===7).length;
+    const h9 = active.filter(s=>(s.send_hour||8)===9).length;
+    const h8 = active.length - h7 - h9;
+    const sent   = this._todaySent;
+    const failed = this._todayFailed;
+    const total  = sent + failed;
+    return {
+      sent, failed, pending: 0, total,
+      by_hour: {
+        7: {total:h7, sent:0, failed:0},
+        8: {total:h8, sent:0, failed:0},
+        9: {total:h9, sent:0, failed:0}
+      }
+    };
+  },
+  today_content: {
+    content_date: new Date().toISOString().split('T')[0],
+    category: '', keyword: '', headline: '', body: '', tags: [],
+  },
+  revenue: [],
+};
+// 이전 코드 호환성을 위한 별칭 (MOCK → STATE)
+const MOCK = STATE;
+
+// ── 파생 통계: STATE에서 실시간 계산 ────────────────────────
+function getStats() {
+  const subs = STATE.subscribers;
+  const active   = subs.filter(s => ['active','trial'].includes(s.status) && s.deleted_at == null);
+  const trial    = subs.filter(s => s.status === 'trial');
+  const monthly  = subs.filter(s => s.status === 'active' && s.plan === 'monthly');
+  const yearly   = subs.filter(s => s.status === 'active' && s.plan === 'yearly');
+  const now      = Date.now();
+  const new_7d   = subs.filter(s => now - new Date(s.created_at) < 7*86400*1000).length;
+  const new_30d  = subs.filter(s => now - new Date(s.created_at) < 30*86400*1000).length;
+  return { active_count:active.length, trial_count:trial.length,
+           monthly_count:monthly.length, yearly_count:yearly.length,
+           new_7d, new_30d };
+}
+
+// ── KPI 로드 (STATE 기반 실시간) ─────────────────────────────
+async function loadKPIs() {
+  const data = await apiFetch('/admin/stats') || {};
+  const send = STATE.today_send;
+
+  // STATE 실제 데이터로 수치 보정
+  const activeCount  = STATE.subscribers.length > 0
+    ? STATE.subscribers.filter(s => s.status === 'active').length
+    : (data.active_count || 0);
+  const trialCount   = STATE.subscribers.length > 0
+    ? STATE.subscribers.filter(s => s.status === 'trial').length
+    : (data.trial_count || 0);
+  const monthlyCount = STATE.subscribers.length > 0
+    ? STATE.subscribers.filter(s => s.plan === 'monthly' && s.status === 'active').length
+    : (data.monthly_count || 0);
+  const yearlyCount  = STATE.subscribers.length > 0
+    ? STATE.subscribers.filter(s => s.plan === 'yearly'  && s.status === 'active').length
+    : (data.yearly_count  || 0);
+  const totalActive  = activeCount + trialCount;
+  const paid         = monthlyCount + yearlyCount;
+  const rev          = monthlyCount * 9900 + yearlyCount * (79000/12);
+
+  setKPI('kpi-total', totalActive.toLocaleString() + ' 명', 'gold',
+    '<span class="up">↑ ' + (data.new_7d||0) + '명</span> 최근 7일');
+  setKPI('kpi-paid',  paid.toLocaleString() + ' 명', 'green',
+    '월간 ' + monthlyCount + ' + 연간 ' + yearlyCount);
+  setKPI('kpi-rev',   '₩ ' + Math.floor(rev).toLocaleString(), 'blue', '이번 달 추정');
+  setKPI('kpi-send', send.sent + ' 건', 'amber',
+    '( 완료 ' + send.sent + ' · 실패 <span style="color:' + (send.failed>0?'var(--red)':'var(--muted)') + '">' + send.failed + ' )</span>');
+}
+function setKPI(id, val, cls, ch) {
+  const el = document.getElementById(id);
+  el.className = `kpi-value ${cls}`;
+  const str = String(val).trim();
+  // ₩ 기호 분리 (있으면)
+  const hasCurrency = str.startsWith('₩');
+  const rest = hasCurrency ? str.slice(1).trim() : str;
+  // 숫자+콤마 부분과 단위 분리 (예: "1,234,000" + "" / "204" + " 건")
+  const numMatch = rest.match(/^([\d,]+)(.*)/);
+  if (numMatch) {
+    const num  = numMatch[1];          // "1,234,000"
+    const unit = numMatch[2].trim();   // "건" or ""
+    el.innerHTML =
+      (hasCurrency ? `<span class="kpi-unit" style="font-size:13px;margin-right:1px">₩</span>` : '') +
+      `<span class="kpi-num">${num}</span>` +
+      (unit ? `<span class="kpi-unit"> ${unit}</span>` : '');
+  } else {
+    el.textContent = str;
+  }
+  const chEl = document.getElementById(id+'-ch');
+  if (chEl) chEl.innerHTML = ch;
+}
+
+// ── 발송 현황 (STATE.today_send 기반) ───────────────────────
+async function loadSendStatus() {
+  let d = null;
+  try { d = await apiFetch('/admin/today-send'); } catch(e) {}
+  // API 응답 없으면 STATE에서 직접 계산
+  if (!d || typeof d.total === 'undefined') d = STATE.today_send;
+  // null/undefined 방어
+  d = Object.assign({sent:0, failed:0, pending:0, total:0, by_hour:{}}, d || {});
+
+  const pct = d.total > 0 ? Math.round(d.sent/d.total*100) : 0;
+  document.getElementById('progNums').textContent    = `${d.sent}/${d.total}`;
+  document.getElementById('progFill').style.width    = pct+'%';
+  document.getElementById('progSuccess').textContent = `성공 ${d.sent}`;
+  document.getElementById('progFailed').textContent  = `실패 ${d.failed}`;
+  document.getElementById('progPending').textContent = `대기 ${d.pending}`;
+
+  // 미니바: MOCK_SEND_HISTORY 기반으로 실제 추이 반영
+  const bars = document.getElementById('miniBars');
+  if (bars) {
+    const hist = [...MOCK_SEND_HISTORY].reverse(); // 오래된→최신 순
+    bars.innerHTML = hist.map(r => {
+      const cls = r.failed === 0 ? 'ok' : r.rate < 95 ? 'fail' : 'ok';
+      const h   = Math.max(10, Math.round(r.rate));
+      return `<div class="mini-bar ${cls}" style="height:${h}%" title="${r.date} ${r.rate.toFixed(1)}%"></div>`;
+    }).join('');
+  }
+
+  // 시간별 발송 현황
+  const hbEl = document.getElementById('hourBreakdown');
+  if (hbEl && d.by_hour) {
+    hbEl.innerHTML = [7,8,9].map(h => {
+      const hd = d.by_hour[h] || {total:0,sent:0,failed:0};
+      const pct = hd.total > 0 ? Math.round(hd.sent/hd.total*100) : 0;
+      return `<div style="display:flex;align-items:center;gap:8px;font-size:11px">
+        <span style="color:var(--gold);font-family:var(--mono);width:44px;flex-shrink:0">오전${h}시</span>
+        <div style="flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${hd.failed>0?'var(--amber)':'var(--green)'};border-radius:3px;transition:width .6s"></div>
+        </div>
+        <span style="color:var(--muted);font-family:var(--mono);width:60px;text-align:right;flex-shrink:0">${hd.sent}/${hd.total}</span>
+        ${hd.failed>0?`<span style="color:var(--red);font-size:10px">✗${hd.failed}</span>`:'<span style="color:var(--green);font-size:10px">✓</span>'}
+      </div>`;
+    }).join('');
+  }
+
+  // 배지 갱신 (독립함수 호출)
+  updateFailBadge();
+}
+
+// ── 실패 배지 독립 갱신 함수 ─────────────────────────────────
+// MOCK_SEND_HISTORY[0].failed = 오늘 실제 실패 건수 (재발송으로 줄어들면 즉시 반영)
+function updateFailBadge() {
+  // MOCK_SEND_HISTORY가 비어있으면 0 반환
+  const todayHist   = MOCK_SEND_HISTORY && MOCK_SEND_HISTORY.length ? MOCK_SEND_HISTORY[0] : null;
+  const todayFailed = todayHist
+    ? (todayHist.failedSubsData
+        ? todayHist.failedSubsData.filter(s => s.resendStatus !== 'success').length
+        : (todayHist.failed || 0))
+    : 0;
+  const totalFailed = (MOCK_SEND_HISTORY || []).reduce((acc, r) => {
+    const remaining = r.failedSubsData
+      ? r.failedSubsData.filter(s => s.resendStatus !== 'success').length
+      : (r.failed || 0);
+    return acc + remaining;
+  }, 0);
+
+  const badge = document.getElementById('failBadge');
+  if (!badge) return;
+  if (todayFailed > 0 || totalFailed > 0) {
+    badge.style.display = 'inline';
+    badge.textContent   = `${todayFailed}/${totalFailed}`;
+    badge.title         = `오늘 실패 ${todayFailed}건 / 누적 실패 ${totalFailed}건`;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ── 오늘 콘텐츠 ───────────────────────────────────────────────
+async function loadTodayContent() {
+  const el = document.getElementById('todayContent');
+  const todayStr = getKSTDateStr();
+
+  // 1순위: CONTENT_ARCHIVE에서 오늘 날짜 AI 생성 콘텐츠 확인
+  const archived = CONTENT_ARCHIVE[todayStr];
+  if (archived && archived.body) {
+    renderTodayContent(el, archived, todayStr);
+    return;
+  }
+
+  // 2순위: API에서 오늘 생성된 콘텐츠 확인 (body가 있어야 유효)
+  const d = await apiFetch('/admin/today-content');
+  if (d && d.body && d.body.length > 30 && !d.body.startsWith('오늘의 주제:')) {
+    renderTodayContent(el, d, todayStr);
+    return;
+  }
+
+  // 콘텐츠 없음
+  el.innerHTML = '<div style="text-align:center;padding:28px 16px;color:var(--muted);font-size:12px;line-height:2">' +
+    '아직 오늘의 콘텐츠가 없습니다<br>' +
+    '<span style="font-size:11px;opacity:.6">콘텐츠 탭 → 📅 생성 버튼을 눌러 생성하세요</span></div>';
+}
+
+function renderTodayContent(el, d, dateStr) {
+  const tags = (d.tags||[]).map(t => '<span class="cc-tag">' + t + '</span>').join('');
+  const bodyHtml = (d.body||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/─+/g,'<hr style="border:none;border-top:1px solid var(--b);margin:8px 0">')
+    .replace(/\n/g,'<br>');
+  const catLabel = {macro:'거시경제',industry:'산업트렌드',finance:'금융·환율',global:'글로벌경제',
+    realestate:'부동산',startup:'창업·스타트업',policy:'경제정책',invest:'투자전략',
+    money:'생활경제',trade:'무역·공급망',energy:'에너지·자원',tech:'테크비즈',labor:'고용·노동',weekly:'주간브리핑'};
+  const catKo = catLabel[d.category] || (d.category||'').toUpperCase();
+  el.innerHTML =
+    '<div class="cc-date" style="margin-bottom:6px">' + dateStr + ' · ' + catKo + '</div>' +
+    '<div class="cc-keyword" style="margin-bottom:10px">' + (d.keyword||d.headline||'') + '</div>' +
+    '<div style="font-size:12px;color:var(--text);line-height:1.9">' + bodyHtml + '</div>' +
+    (tags ? '<div class="cc-tags" style="margin-top:10px">' + tags + '</div>' : '');
+}
+
+// ── 최근 가입자 ───────────────────────────────────────────────
+async function loadRecentSubs() {
+  const subs  = STATE.subscribers.slice(0, 8);
+  const tbody = document.getElementById('recentSubsBody');
+  if (!subs.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:40px 0">' +
+      '<div class="empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">' +
+      '<span class="empty-ico">👥</span>구독자 없음</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = subs.map(s => {
+    const cd       = new Date(s.created_at);
+    const diffDays = (Date.now() - cd.getTime()) / (1000*60*60*24);
+    const isNew    = diffDays >= 0 && diffDays <= 3;
+    const newBadge = isNew
+      ? '<span style="margin-left:4px;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.3);color:var(--green);font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px">NEW</span>'
+      : '';
+    const timeStr = cd.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+        return `<tr onclick="showPage('subscribers')" style="cursor:pointer"
+        onmouseover="this.style.background='rgba(201,168,76,.04)'"
+        onmouseout="this.style.background=''">` +
+      '<td><strong>' + s.name + '</strong>' + newBadge + '</td>' +
+      '<td class="t-phone">' + s.phone + '</td>' +
+      '<td><span class="badge ' + s.plan + '">' + ({monthly:'월간',yearly:'연간',free:'무료'}[s.plan]||s.plan) + '</span></td>' +
+      '<td><span class="badge ' + s.status + '"><span class="badge-dot"></span>' + ({active:'활성',trial:'체험',cancelled:'해지',expired:'만료'}[s.status]||s.status) + '</span></td>' +
+      '<td style="font-family:var(--mono);font-size:11px;color:var(--muted)">' + timeStr + '</td>' +
+      '<td style="font-family:var(--mono);font-size:11px">' + cd.toLocaleDateString('ko-KR') + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+// ── 구독자 목록 (전체) ────────────────────────────────────────
+// ── 구독자 메모 인라인 편집 ──────────────────────────────────
+function startMemoEdit(id) {
+  document.getElementById('memoText_' + id).closest('div').style.display = 'none';
+  const editDiv = document.getElementById('memoEdit_' + id);
+  editDiv.style.display = 'flex';
+  const input = document.getElementById('memoInput_' + id);
+  input.focus();
+  input.select();
+}
+
+function cancelMemoEdit(id) {
+  document.getElementById('memoText_' + id).closest('div').style.display = 'flex';
+  document.getElementById('memoEdit_' + id).style.display = 'none';
+}
+
+function saveMemo(id) {
+  const newMemo = document.getElementById('memoInput_' + id).value.trim();
+  const sub = STATE.subscribers.find(s => s.id === id);
+  if (sub) {
+    sub.memo = newMemo;
+    // 표시 텍스트 즉시 업데이트
+    const textEl = document.getElementById('memoText_' + id);
+    if (textEl) { textEl.textContent = newMemo || '—'; textEl.title = newMemo; }
+  }
+  saveSubsToStorage();
+  cancelMemoEdit(id);
+  showToast('메모가 저장되었습니다', 'ok');
+}
+
+async function loadSubscribers() {
+  const searchVal    = (document.getElementById('subSearch')?.value || '').trim().toLowerCase();
+  const statusFilter = document.getElementById('subFilter')?.value || '';
+  const hourFilterVal= document.getElementById('hourFilter')?.value || '';
+
+  // STATE에서 필터 + like 검색 적용
+  const filtered = STATE.subscribers.filter(s => {
+    const matchStatus = !statusFilter || s.status === statusFilter;
+    const matchHour   = !hourFilterVal || String(s.send_hour) === hourFilterVal;
+    const matchSearch = !searchVal ||
+      s.name.toLowerCase().includes(searchVal) ||
+      s.phone.replace(/-/g,'').includes(searchVal.replace(/-/g,''));
+    return matchStatus && matchHour && matchSearch;
+  });
+
+  const countEl = document.getElementById('subCount');
+  if (countEl) countEl.textContent = `총 ${filtered.length}명`;
+
+  // ★ STATE.subscribers 항상 우선 사용 (API는 DB 연동 전까지 무시)
+  const tbody = document.getElementById('subTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty"><span class="empty-ico">👥</span>${searchVal?'검색 결과가 없습니다':'구독자가 없습니다'}</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(s => {
+    const isCancelled = s.status === 'cancelled' || s.status === 'expired';
+    const hourLabel   = `오전 ${s.send_hour||8}시`;
+
+    // 가입시각: KST 기준 HH:MM
+    const createdDt  = s.created_at ? new Date(s.created_at) : null;
+    const joinTimeStr = createdDt
+      ? createdDt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Asia/Seoul'})
+      : '—';
+
+    // 시작일 (created_at 날짜, KST)
+    const startDate = createdDt
+      ? createdDt.toLocaleDateString('ko-KR', {timeZone:'Asia/Seoul'})
+      : '—';
+
+    // 종료일
+    const endDateStr = s.end_date
+      ? new Date(s.end_date).toLocaleDateString('ko-KR')
+      : (isCancelled ? '해지됨' : '—');
+    const endColor = s.end_date && new Date(s.end_date) < new Date(Date.now()+7*86400000)
+      ? 'var(--amber)' : 'var(--muted)';
+
+    // 이메일
+    const emailStr = s.email
+      ? `<a href="mailto:${s.email}" onclick="event.stopPropagation()"
+           style="color:var(--muted);font-size:11px;text-decoration:none"
+           title="${s.email}">${s.email.length>16 ? s.email.slice(0,14)+'…' : s.email}</a>`
+      : '<span style="color:var(--b)">—</span>';
+
+    const actionBtn = isCancelled
+      ? `<div style="display:flex;gap:4px">
+           <button onclick="restoreSub('${s.id}','${s.name}','trial')"
+             style="background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:var(--amber);padding:4px 8px;border-radius:4px;font-size:10px;cursor:pointer;font-family:var(--sans);font-weight:700">체험 복구</button>
+           <button onclick="restoreSub('${s.id}','${s.name}','active')"
+             style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);color:var(--green);padding:4px 8px;border-radius:4px;font-size:10px;cursor:pointer;font-family:var(--sans);font-weight:700">활성 복구</button>
+         </div>`
+      : `<div style="display:flex;gap:4px;align-items:center">
+           <button onclick="cancelSub('${s.id}','${s.name}')"
+             style="background:none;border:1px solid var(--b);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-family:var(--sans)">${s.status==='trial'?'체험취소':'해지'}</button>
+           <button onclick="changeHour('${s.id}','${s.name}',${s.send_hour||8})"
+             style="background:var(--gold-d);border:1px solid var(--b);color:var(--gold);padding:4px 8px;border-radius:4px;font-size:10px;cursor:pointer;font-family:var(--sans)" title="발송 시간 변경">⏰</button>
+         </div>`;
+
+    const diffDays = (Date.now() - new Date(s.created_at).getTime()) / (1000*60*60*24);
+    const isNew    = diffDays >= 0 && diffDays <= 3;
+    const newBadge = isNew
+      ? `<span style="display:inline-block;margin-left:5px;background:rgba(74,222,128,.15);
+                      border:1px solid rgba(74,222,128,.3);color:var(--green);
+                      font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;
+                      vertical-align:middle">NEW</span>`
+      : '';
+
+    return `<tr id="subRow_${s.id}" onclick="openSubDetail('${s.id}')" style="cursor:pointer"
+        onmouseover="this.style.background='rgba(201,168,76,.04)'"
+        onmouseout="this.style.background=''">
+      <td onclick="event.stopPropagation()" style="text-align:center">
+        <input type="checkbox" class="sub-check" data-id="${s.id}"
+          style="accent-color:var(--gold);cursor:pointer;width:14px;height:14px"
+          onchange="onSubCheck()">
+      </td>
+      <td><strong>${s.name}</strong>${newBadge}</td>
+      <td class="t-phone" style="font-size:12px">${s.phone}</td>
+      <td><span class="badge ${s.plan}">${{monthly:'월간',yearly:'연간',free:'무료'}[s.plan]||s.plan}</span></td>
+      <td><span class="badge ${s.status}"><span class="badge-dot"></span>${{active:'활성',trial:'체험',cancelled:'해지',expired:'만료'}[s.status]||s.status}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--gold)">${hourLabel}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${joinTimeStr}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${startDate}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:${endColor}">${endDateStr}</td>
+      <td style="font-size:11px;color:var(--muted)">${emailStr}</td>
+      <td onclick="event.stopPropagation()" style="min-width:120px;max-width:180px">
+        <div style="display:flex;align-items:center;gap:4px">
+          <span id="memoText_${s.id}"
+            style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;display:inline-block"
+            title="${s.memo||''}">${s.memo||'—'}</span>
+          <button onclick="startMemoEdit('${s.id}')"
+            style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:2px 4px;flex-shrink:0;opacity:.6"
+            title="메모 수정" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity='.6'">✏️</button>
+        </div>
+        <div id="memoEdit_${s.id}" style="display:none;gap:4px;align-items:center">
+          <input id="memoInput_${s.id}" type="text" value="${s.memo||''}"
+            placeholder="메모 입력..."
+            onkeydown="if(event.key==='Enter')saveMemo('${s.id}');if(event.key==='Escape')cancelMemoEdit('${s.id}')"
+            style="flex:1;background:rgba(255,255,255,.06);border:1px solid var(--gold);border-radius:5px;
+                   padding:4px 7px;font-size:11px;color:var(--text);font-family:var(--sans);outline:none;min-width:0;width:100px">
+          <button onclick="saveMemo('${s.id}')"
+            style="background:var(--gold);border:none;color:var(--bg);padding:3px 7px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap">저장</button>
+          <button onclick="cancelMemoEdit('${s.id}')"
+            style="background:none;border:1px solid var(--b);color:var(--muted);padding:3px 6px;border-radius:4px;font-size:10px;cursor:pointer;font-family:var(--sans)">✕</button>
+        </div>
+      </td>
+      <td onclick="event.stopPropagation()">${actionBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── 발송 이력 ─────────────────────────────────────────────────
+// 고정 mock 데이터 (랜덤 재생성 방지 → 성공률 일관성 보장)
+// KST 기준 이번 달 1일 ~ 말일 전체 날짜 생성
+function buildMonthHistory(fromStr, toStr) {
+  // KST 기준 날짜 문자열 → 'YYYY-MM-DD' 반환 (UTC 오프셋 오류 방지)
+  function kstDateStr(offsetDays) {
+    const d = new Date(new Date().getTime() + 9*60*60*1000);
+    d.setUTCDate(d.getUTCDate() + (offsetDays||0));
+    return d.toISOString().slice(0,10);
+  }
+  function kstMonthBounds() {
+    const d = new Date(new Date().getTime() + 9*60*60*1000);
+    const y = d.getUTCFullYear(), m = d.getUTCMonth();
+    const firstDay = y + '-' + String(m+1).padStart(2,'0') + '-01';
+    const lastD    = new Date(Date.UTC(y, m+1, 0)).getUTCDate();
+    const lastDay  = y + '-' + String(m+1).padStart(2,'0') + '-' + String(lastD).padStart(2,'0');
+    return { firstDay, lastDay };
+  }
+
+  const { firstDay, lastDay } = kstMonthBounds();
+  // 입력값 없으면 이번 달 기본값
+  const startStr = fromStr || firstDay;
+  const endStr   = toStr   || lastDay;
+
+  // 날짜 문자열을 정수(YYYYMMDD)로 비교 — UTC 오프셋 무관
+  function dateToInt(s) { return parseInt(s.replace(/-/g,''), 10); }
+  const startInt = dateToInt(startStr);
+  const endInt   = dateToInt(endStr);
+
+  // 시작일부터 종료일까지 날짜 배열 생성
+  const todayKSTStr = getKSTDateStr ? getKSTDateStr() : new Date(new Date().getTime()+9*3600000).toISOString().slice(0,10);
+  const result = [];
+  let cur = startStr;
+  while (dateToInt(cur) <= endInt) {
+    const hasContent = !!(typeof CONTENT_ARCHIVE !== 'undefined' && CONTENT_ARCHIVE[cur]);
+    // 오늘 날짜면 실제 발송 카운터 반영
+    const isToday = (cur === todayKSTStr);
+    const sent   = isToday ? (STATE._todaySent   || 0) : 0;
+    const failed = isToday ? (STATE._todayFailed || 0) : 0;
+    const total  = sent + failed;
+    const rate   = total === 0 ? 100 : Math.floor(sent/total*1000)/10;
+    result.push({
+      dateStr: cur,
+      date: new Date(cur + 'T12:00:00+09:00').toLocaleDateString('ko-KR'),
+      total, sent, failed, rate,
+      hasContent,
+    });
+    // 다음 날짜 계산 (YYYY-MM-DD 순수 문자열 연산)
+    const next = new Date(cur + 'T12:00:00+09:00');
+    next.setUTCDate(next.getUTCDate() + 1);
+    cur = next.toISOString().slice(0,10);
+  }
+  return result.reverse(); // 최신 날짜 먼저
+}
+
+const MOCK_SEND_HISTORY = []; // loadSendHistory 진입 시 buildMonthHistory로 채워짐
+
+// 선택 발송 이력 (오늘 날짜 기준으로 쌓임)
+// {time, recipients:[{name,phone,id}], content, success, failed}
+const BULK_SEND_LOG = [];
+
+let selectedSendIdx = null;  // 현재 펼쳐진 날짜 인덱스
+
+function loadSendHistory() {
+  const fromVal = document.getElementById('sendDateFrom')?.value || '';
+  const toVal   = document.getElementById('sendDateTo')?.value   || '';
+  const rows    = buildMonthHistory(fromVal, toVal);
+  selectedSendIdx = null;
+  document.getElementById('sendDetailPanel').innerHTML = '';
+
+  if (!rows.length) {
+    document.getElementById('sendHistBody').innerHTML =
+      '<tr><td colspan="6"><div class="empty"><span class="empty-ico">📨</span>조회 결과 없음</div></td></tr>';
+    return;
+  }
+
+  // 각 행 뒤에 detail 행을 함께 렌더링 (초기 숨김)
+  document.getElementById('sendHistBody').innerHTML = rows.map(r => {
+    const rateColor    = r.rate === 100 ? 'var(--green)' : r.rate >= 95 ? 'var(--amber)' : 'var(--red)';
+    const badgeCls     = r.rate === 100 ? 'success' : r.rate >= 95 ? 'trial' : 'failed';
+    const contentBadge = r.hasContent
+      ? ' <span style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);color:var(--green);font-size:9px;padding:1px 4px;border-radius:3px;margin-left:4px">콘텐츠</span>'
+      : '';
+    return `<tr id="sendRow_${r.dateStr}" onclick="toggleSendDetail('${r.dateStr}')" style="cursor:pointer"
+        onmouseover="if(selectedSendIdx!=='${r.dateStr}')this.style.background='rgba(201,168,76,.04)'"
+        onmouseout="if(selectedSendIdx!=='${r.dateStr}')this.style.background=''">
+        <td style="font-family:var(--mono);font-size:11px">${r.date}${contentBadge}</td>
+        <td><strong>${r.total}</strong></td>
+        <td style="color:var(--green)">${r.sent}</td>
+        <td style="color:${r.failed > 0 ? 'var(--red)' : 'var(--muted)'}">${r.failed}</td>
+        <td><span class="badge ${badgeCls}" style="color:${rateColor}">${r.rate.toFixed(1)}%</span></td>
+        <td id="sendRowArrow_${r.dateStr}" style="color:var(--muted);font-size:11px;text-align:right;padding-right:16px">▼</td>
+      </tr>
+      <tr id="sendDetail_${r.dateStr}" style="display:none">
+        <td colspan="6" style="padding:0">
+          <div id="sendDetailInner_${r.dateStr}"
+            style="overflow:hidden;max-height:0;transition:max-height .3s ease;background:rgba(201,168,76,.03);border-bottom:1px solid var(--b)">
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function resetSendFilter() {
+  const kstNow = new Date(new Date().getTime() + 9*60*60*1000);
+  const year   = kstNow.getUTCFullYear();
+  const month  = String(kstNow.getUTCMonth()+1).padStart(2,'0');
+  const lastDay= new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth()+1, 0)).getUTCDate();
+  document.getElementById('sendDateFrom').value = year + '-' + month + '-01';
+  document.getElementById('sendDateTo').value   = year + '-' + month + '-' + String(lastDay).padStart(2,'0');
+  loadSendHistory();
+}
+
+function toggleSendDetail(dateStr) {
+  if (selectedSendIdx && selectedSendIdx !== dateStr) {
+    const prevInner = document.getElementById('sendDetailInner_' + selectedSendIdx);
+    const prevDetail= document.getElementById('sendDetail_'      + selectedSendIdx);
+    const prevArrow = document.getElementById('sendRowArrow_'    + selectedSendIdx);
+    const prevRow   = document.getElementById('sendRow_'         + selectedSendIdx);
+    if (prevInner)  prevInner.style.maxHeight = '0';
+    setTimeout(() => { if (prevDetail) prevDetail.style.display = 'none'; }, 300);
+    if (prevArrow)  prevArrow.textContent = '▼';
+    if (prevRow)    prevRow.style.background = '';
+  }
+
+  const detailRow = document.getElementById('sendDetail_'      + dateStr);
+  const innerDiv  = document.getElementById('sendDetailInner_' + dateStr);
+  const arrowEl   = document.getElementById('sendRowArrow_'    + dateStr);
+  const mainRow   = document.getElementById('sendRow_'         + dateStr);
+
+  if (selectedSendIdx === dateStr) {
+    if (innerDiv)  innerDiv.style.maxHeight = '0';
+    setTimeout(() => { if (detailRow) detailRow.style.display = 'none'; }, 300);
+    if (arrowEl)   arrowEl.textContent = '▼';
+    if (mainRow)   mainRow.style.background = '';
+    selectedSendIdx = null;
+    return;
+  }
+
+  selectedSendIdx = dateStr;
+  if (mainRow)  mainRow.style.background = 'rgba(201,168,76,.06)';
+  if (arrowEl)  arrowEl.textContent = '▲';
+  if (!innerDiv) return;
+
+  const logs = BULK_SEND_LOG.filter(function(l) {
+    var d = new Date(l.timeObj || l.time);
+    return new Date(d.getTime() + 9*3600000).toISOString().slice(0,10) === dateStr;
+  });
+  var archived    = (typeof CONTENT_ARCHIVE !== 'undefined') && CONTENT_ARCHIVE[dateStr];
+  var todayKST    = getKSTDateStr();
+  var isToday     = dateStr === todayKST;
+  var allRecip    = logs.reduce(function(a,l){ return a.concat(l.recipients||[]); }, []);
+  var successList = allRecip.filter(function(r){ return r.status === 'success'; });
+  var failList    = allRecip.filter(function(r){ return r.status === 'failed'; });
+  var totalSent   = isToday ? (STATE._todaySent   || 0) : successList.length;
+  var totalFailed = isToday ? (STATE._todayFailed  || 0) : failList.length;
+
+  var html = '<div>';
+
+  if (archived) {
+    html += '<div style="padding:10px 18px;background:rgba(201,168,76,.05);border-bottom:1px solid var(--b);display:flex;gap:10px;align-items:center">' +
+      '<span style="font-size:10px;color:var(--muted)">콘텐츠</span>' +
+      '<span style="font-size:12px;font-weight:700;color:var(--gold)">' + (archived.kw||'') + '</span>' +
+      '<span style="font-size:11px;color:var(--muted)"> — ' + (archived.headline||'') + '</span>' +
+      '</div>';
+  }
+
+  var retryAllBtn = failList.length > 0
+    ? ('<button onclick="retryAllFailed(' + JSON.stringify(dateStr) + ')" ' +
+       'style="margin-left:auto;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:var(--red);' +
+       'padding:3px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--sans)">' +
+       '↺ 실패 ' + failList.length + '건 전체 재발송</button>')
+    : '';
+
+  html += '<div style="padding:10px 18px;display:flex;gap:20px;border-bottom:1px solid var(--b);font-size:12px;align-items:center">' +
+    '<span>전체 <strong style="color:var(--text)">' + (totalSent+totalFailed) + '</strong>명</span>' +
+    '<span>성공 <strong style="color:var(--green)">' + totalSent + '</strong>명</span>' +
+    '<span>실패 <strong style="color:' + (totalFailed>0?'var(--red)':'var(--muted)') + '">' + totalFailed + '</strong>명</span>' +
+    retryAllBtn +
+    '</div>';
+
+  if (allRecip.length > 0) {
+    html += '<div style="padding:0 18px 14px"><table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px">' +
+      '<thead><tr style="border-bottom:1px solid var(--b)">' +
+      '<th style="text-align:left;padding:5px 8px;color:var(--muted);font-weight:500;width:30px">상태</th>' +
+      '<th style="text-align:left;padding:5px 8px;color:var(--muted);font-weight:500">이름</th>' +
+      '<th style="text-align:left;padding:5px 8px;color:var(--muted);font-weight:500">전화번호</th>' +
+      '<th style="text-align:left;padding:5px 8px;color:var(--muted);font-weight:500">결과</th>' +
+      '<th style="text-align:right;padding:5px 8px;color:var(--muted);font-weight:500">재발송</th>' +
+      '</tr></thead><tbody>';
+
+    allRecip.forEach(function(r) {
+      var ok = r.status === 'success';
+      var retryBtn = !ok
+        ? ('<button onclick="retrySingleSend(' + JSON.stringify((r.phone||'').replace(/-/g,'')) + ',' + JSON.stringify(r.name||'') + ')" ' +
+           'style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:var(--red);' +
+           'padding:3px 10px;border-radius:4px;font-size:10px;cursor:pointer;font-family:var(--sans)">↺ 재발송</button>')
+        : '';
+      html += '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">' +
+        '<td style="padding:7px 8px;text-align:center">' + (ok?'✅':'❌') + '</td>' +
+        '<td style="padding:7px 8px;font-weight:600;color:var(--text)">' + (r.name||'—') + '</td>' +
+        '<td style="padding:7px 8px;font-family:var(--mono);color:var(--muted)">' + (r.phone||'—') + '</td>' +
+        '<td style="padding:7px 8px;color:' + (ok?'var(--green)':'var(--red)') + '">' + (ok?'발송 성공':'발송 실패') + '</td>' +
+        '<td style="padding:7px 8px;text-align:right">' + retryBtn + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+  } else {
+    html += '<div style="padding:16px 18px;font-size:11px;color:var(--muted)">' +
+      (isToday && totalSent > 0 ? '✅ 발송 완료 ' + totalSent + '건' : '발송 이력 없음') +
+      '</div>';
+  }
+
+  html += '</div>';
+  innerDiv.innerHTML = html;
+
+  if (detailRow) detailRow.style.display = 'table-row';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      if (innerDiv) innerDiv.style.maxHeight = '500px';
+    });
+  });
+}
+
+
+function renderSendDetail(idx, tab) {
+  const r = MOCK_SEND_HISTORY && MOCK_SEND_HISTORY[idx] ? MOCK_SEND_HISTORY[idx] : null;
+  if (!r) return;
+  const panel = document.getElementById('sendDetailPanel');
+
+  // 실시간 잔여 실패 건수 (재발송 성공 제외)
+  const remainingFailed = r.failedSubsData
+    ? r.failedSubsData.filter(s => s.resendStatus !== 'success').length
+    : r.failed;
+  const remainingSent   = r.total - remainingFailed;
+  const remainingRate   = remainingFailed === 0 ? 100
+    : Math.floor(remainingSent / r.total * 1000) / 10;
+
+  // 구독자별 실패 상태 초기화 (최초 렌더 시)
+  if (!r.failedSubsData) {
+    const allSubs = MOCK.subscribers.slice(0, r.total);
+    // 오류코드별 처리방법 정의
+    const ERROR_GUIDE = {
+      'ERR_001': { msg:'수신 거부',     guide:'카카오채널 차단 여부 확인 → 구독자에게 차단 해제 안내 필요' },
+      'ERR_002': { msg:'채널 미가입',   guide:'카카오채널 @1DAYECO 친구 추가 여부 확인 → 재가입 안내 문자 발송' },
+      'TIMEOUT': { msg:'발송 타임아웃', guide:'솔라피 서버 상태 확인 후 재발송. 반복 시 발송 시간대 변경 고려' },
+      'ERR_003': { msg:'번호 오류',     guide:'전화번호 형식 확인 → 구독자 DB에서 번호 수정 후 재발송' },
+      'ERR_004': { msg:'잔액 부족',     guide:'솔라피 계정 충전 필요 → 관리자 즉시 확인 요망' },
+    };
+    r.failedSubsData = allSubs.slice(0, r.failed).map((s,i) => {
+      const codes = ['ERR_001','ERR_002','TIMEOUT'];
+      const code  = codes[i%3];
+      const info  = ERROR_GUIDE[code];
+      return {
+        ...s,
+        errorCode: code,
+        errorMsg:  info.msg,
+        errorGuide: info.guide,
+        resendStatus: 'pending',
+        resendError: '',
+      };
+    });
+    r.successSubsData = allSubs.slice(r.failed);
+  }
+  const failedSubs  = r.failedSubsData.filter(s => s.resendStatus !== 'success');
+  const successSubs = r.successSubsData;
+
+  const failRows = failedSubs.length === 0
+    ? `<tr><td colspan="6"><div class="empty" style="padding:24px"><span class="empty-ico">🎉</span>모든 실패 건이 재발송 완료되었습니다</div></td></tr>`
+    : failedSubs.map((s,i) => {
+        const isSending = s.resendStatus === 'sending';
+        const isFailed  = s.resendStatus === 'failed';
+        // 재발송 실패 시 오류내용 인라인 편집 가능
+        const errorCell = isFailed
+          ? `<td style="padding:0">
+               <input id="errMsg_${idx}_${s.id}"
+                 value="${s.resendError || s.errorMsg}"
+                 style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);
+                        border-radius:4px;padding:3px 8px;font-size:11px;color:var(--red);
+                        width:100%;outline:none;font-family:var(--sans)"
+                 onblur="updateErrMsg(${idx},'${s.id}',this.value)"
+                 placeholder="오류 내용 수정 후 재발송">
+             </td>`
+          : `<td style="font-size:11px;color:var(--muted)">${s.errorMsg}</td>`;
+
+        const btnLabel = isSending ? '<span class="spin" style="border-top-color:var(--red)"></span>'
+                       : isFailed  ? '↺ 재시도'
+                       : '재발송';
+        const btnStyle = isFailed
+          ? 'background:rgba(248,113,113,.18);border-color:rgba(248,113,113,.5);'
+          : '';
+        return `<tr id="failRow_${idx}_${s.id}">
+          <td><strong>${s.name}</strong></td>
+          <td class="t-phone">${s.phone}</td>
+          <td style="font-family:var(--mono);font-size:10px;color:var(--red)">${s.errorCode}</td>
+          ${errorCell}
+          <td style="max-width:160px">
+            <div class="tip-wrap">
+              <span class="tip-text">${(s.errorGuide||'').slice(0,22)}${(s.errorGuide||'').length>22?'…':''}</span>
+              ${s.errorGuide ? `<span class="tip-icon">?<div class="tip-bubble"><strong style="color:var(--gold);display:block;margin-bottom:4px">💡 처리방법</strong>${s.errorGuide}</div></span>` : ''}
+            </div>
+          </td>
+          <td style="white-space:nowrap">
+            <button class="resend-btn" id="resendBtn_${idx}_${s.id}"
+              style="${btnStyle}" ${isSending?'disabled':''}
+              onclick="resendOne(${idx},'${s.id}','${s.name}')">${btnLabel}</button>
+          </td>
+        </tr>`;
+      }).join('');
+
+  const successRows = successSubs.slice(0,20).map(s => `
+    <tr>
+      <td><strong>${s.name}</strong></td>
+      <td class="t-phone">${s.phone}</td>
+      <td><span class="badge success" style="font-size:10px">✓ 발송완료</span></td>
+      <td style="font-family:var(--mono);font-size:10px;color:var(--muted)">msg_${Math.random().toString(36).slice(2,10)}</td>
+      <td></td>
+    </tr>`).join('');
+
+  panel.innerHTML = `
+    <div class="send-detail-panel">
+      <div class="sdp-head">
+        <div class="sdp-head-left">
+          <div class="sdp-date">📅 ${r.date} 발송 상세</div>
+          <div class="sdp-kpis">
+            <div class="sdp-kpi">전체<span>${r.total}</span></div>
+            <div class="sdp-kpi">성공<span class="ok">${remainingSent}</span></div>
+            <div class="sdp-kpi">실패<span class="ng">${remainingFailed}</span></div>
+            <div class="sdp-kpi">성공률<span class="${r.rate===100?'ok':r.rate>=95?'':' ng'}" style="color:${r.rate===100?'var(--green)':r.rate>=95?'var(--amber)':'var(--red)'}">${r.rate===100?'100.0':r.rate.toFixed(1)}%</span></div>
+          </div>
+        </div>
+        ${remainingFailed > 0 ? `<button class="resend-all-btn" onclick="resendAll(${idx})">🔄 실패 ${remainingFailed}건 전체 재발송</button>` : ''}
+      </div>
+      <div class="sdp-tabs">
+        <div class="sdp-tab ${tab==='failed'?'active':''}" onclick="renderSendDetail(${idx},'failed')">
+          실패 <span style="background:rgba(248,113,113,.15);color:var(--red);padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px">${remainingFailed}</span>
+        </div>
+        <div class="sdp-tab ${tab==='success'?'active':''}" onclick="renderSendDetail(${idx},'success')">
+          성공 <span style="background:rgba(74,222,128,.1);color:var(--green);padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px">${remainingSent}</span>
+        </div>
+        ${idx===0 && BULK_SEND_LOG.length>0 ? `
+        <div class="sdp-tab ${tab==='bulk'?'active':''}" onclick="renderSendDetail(${idx},'bulk')">
+          선택발송 <span style="background:rgba(201,168,76,.15);color:var(--gold);padding:1px 6px;border-radius:10px;font-size:10px;margin-left:4px">${BULK_SEND_LOG.reduce((a,l)=>a+l.success,0)}</span>
+        </div>` : ''}
+      </div>
+      <div class="sdp-body">
+        ${tab==='bulk' ? renderBulkTab() : `
+        <table>
+          <thead><tr><th>이름</th><th>전화번호</th><th>${tab==='failed'?'오류코드':'상태'}</th><th>${tab==='failed'?'오류내용':'메시지ID'}</th>${tab==='failed'?'<th>처리방법</th>':''}<th>${tab==='failed'?'재발송':''}</th></tr></thead>
+          <tbody>${tab==='failed' ? failRows : successRows}</tbody>
+        </table>`}
+      </div>
+    </div>`;
+}
+
+// ── 오류내용 인라인 수정 반영 ──────────────────────────────
+function updateErrMsg(dateIdx, subId, newMsg) {
+  const hist = MOCK_SEND_HISTORY && MOCK_SEND_HISTORY[dateIdx] ? MOCK_SEND_HISTORY[dateIdx] : null;
+  if (!hist) return;
+  const sub  = hist.failedSubsData?.find(s => s.id === subId);
+  if (sub) sub.resendError = newMsg;
+}
+
+// ── 재발송 미리보기 상태 ──────────────────────────────────
+let rpState = { dateIdx: null, subId: null, name: null, content: '' };
+
+// ── 개별 재발송: 미리보기 모달 열기 ───────────────────────
+function resendOne(dateIdx, subId, name) {
+  const hist = MOCK_SEND_HISTORY && MOCK_SEND_HISTORY[dateIdx] ? MOCK_SEND_HISTORY[dateIdx] : null;
+  if (!hist) return;
+  const sub  = hist.failedSubsData?.find(s => s.id === subId);
+  if (!sub) return;
+
+  // 오늘의 콘텐츠 본문 가져오기 (mock: 첫 번째 콘텐츠 사용)
+  const bodyText = MOCK_CONTENT[0]?.body || '발송할 내용을 입력하세요.';
+
+  // 상태 저장
+  rpState = { dateIdx, subId, name, content: bodyText };
+
+  // 모달 정보 채우기
+  document.getElementById('rpRecipient').textContent = `👤 ${name} (${sub.phone})`;
+  document.getElementById('rpDate').textContent      = `📅 ${hist.date}`;
+  document.getElementById('rpError').textContent     = `⚠️ ${sub.resendError || sub.errorMsg}`;
+  document.getElementById('rpEditor').value          = bodyText;
+  document.getElementById('rpPreviewBody').textContent = bodyText;
+  updateRpCharCount(bodyText);
+
+  // 탭 초기화 → 미리보기 탭
+  switchRpTab('preview');
+
+  document.getElementById('resendPreviewOverlay').classList.add('open');
+}
+
+function closeResendPreview() {
+  document.getElementById('resendPreviewOverlay').classList.remove('open');
+  rpState = { dateIdx: null, subId: null, name: null, content: '' };
+  // 버튼 상태 초기화
+  document.getElementById('rpSendBtn').disabled  = false;
+  document.getElementById('rpSendTxt').style.display  = 'inline';
+  document.getElementById('rpSendSpin').style.display = 'none';
+}
+
+function switchRpTab(tab) {
+  const isPreview = tab === 'preview';
+  document.getElementById('rpPreviewTab').style.display = isPreview ? 'block' : 'none';
+  document.getElementById('rpEditTab').style.display    = isPreview ? 'none'  : 'block';
+  document.getElementById('rpTab1').className = 'tab-btn' + (isPreview ? ' active' : '');
+  document.getElementById('rpTab2').className = 'tab-btn' + (!isPreview ? ' active' : '');
+}
+
+function syncRpPreview(val) {
+  rpState.content = val;
+  document.getElementById('rpPreviewBody').textContent = val;
+  updateRpCharCount(val);
+}
+
+function updateRpCharCount(val) {
+  const len  = val.length;
+  const el   = document.getElementById('rpCharCount');
+  el.textContent = `${len}자`;
+  el.className   = 'rp-char-count' + (len > 1000 ? ' over' : '');
+}
+
+// ── 재발송 실행 ────────────────────────────────────────────
+async function executeResend() {
+  const { dateIdx, subId, name, content } = rpState;
+  if (dateIdx === null) return;
+
+  const hist = MOCK_SEND_HISTORY && MOCK_SEND_HISTORY[dateIdx] ? MOCK_SEND_HISTORY[dateIdx] : null; if (!hist) return;
+  const sub  = hist.failedSubsData?.find(s => s.id === subId);
+  if (!sub) return;
+
+  // 버튼 로딩
+  document.getElementById('rpSendBtn').disabled  = true;
+  document.getElementById('rpSendTxt').style.display  = 'none';
+  document.getElementById('rpSendSpin').style.display = 'inline';
+  document.getElementById('rpHint').textContent  = '발송 중입니다...';
+
+  sub.resendStatus = 'sending';
+
+  try {
+    if (API_BASE) {
+      await apiPost('/admin/resend', {
+        subscriber_id: subId,
+        date: hist.dateObj.toISOString().split('T')[0],
+        content,
+      });
+    }
+    await new Promise(r => setTimeout(r, 1000));
+
+    // mock: 80% 성공 / 20% 실패
+    const mockSuccess = Math.random() > 0.2;
+    if (mockSuccess || API_BASE) {
+      sub.resendStatus = 'success';
+      hist.failed = hist.failedSubsData?.filter(s => s.resendStatus !== 'success').length ?? 0;
+      hist.sent   = hist.total - hist.failed;
+      hist.rate   = hist.failed === 0 ? 100 : Math.floor(hist.sent / hist.total * 1000) / 10;
+      closeResendPreview();
+      showToast(`${name} 님에게 재발송 완료`, 'ok');
+    } else {
+      sub.resendStatus = 'failed';
+      sub.resendError  = content;
+      closeResendPreview();
+      showToast(`${name} 님 재발송 실패 — 오류내용을 수정 후 다시 시도하세요`, 'ng');
+    }
+    renderSendDetail(dateIdx, 'failed');
+    loadSendHistory();
+    updateFailBadge(); // 재발송 결과 즉시 배지 반영
+  } catch(e) {
+    sub.resendStatus = 'failed';
+    sub.resendError  = e.message;
+    closeResendPreview();
+    showToast(e.message, 'ng');
+    renderSendDetail(dateIdx, 'failed');
+  }
+}
+
+// ── 선택발송 탭 렌더링 ────────────────────────────────────────
+function renderBulkTab() {
+  if (!BULK_SEND_LOG.length) {
+    return `<div class="empty" style="padding:32px"><span class="empty-ico">📤</span>선택 발송 이력이 없습니다</div>`;
+  }
+  const rows = BULK_SEND_LOG.map(log => `
+    <tr>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${log.time}</td>
+      <td><span class="badge ${log.failed===0?'success':'failed'}">${log.failed===0?'전송완료':'부분실패'}</span></td>
+      <td style="font-size:12px"><strong style="color:var(--gold)">${log.success}</strong>명 발송 성공</td>
+      <td>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;max-width:200px">
+          ${log.recipients.slice(0,4).map(r=>`<span style="font-size:10px;background:var(--s3);border:1px solid var(--b);border-radius:3px;padding:1px 6px;color:var(--muted)">${r.name}</span>`).join('')}
+          ${log.recipients.length>4?`<span style="font-size:10px;color:var(--muted)">+${log.recipients.length-4}명</span>`:''}
+        </div>
+      </td>
+      <td>
+        <button onclick="viewBulkDetail('${log.id}')"
+          style="background:var(--gold-d);border:1px solid var(--b);color:var(--gold);
+                 padding:3px 10px;border-radius:4px;font-size:10px;cursor:pointer;font-family:var(--sans)">상세</button>
+      </td>
+    </tr>`).join('');
+
+  return `<table>
+    <thead><tr><th>발송시각</th><th>상태</th><th>결과</th><th>수신자</th><th>상세</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// ── 선택발송 상세 팝업 ────────────────────────────────────────
+function viewBulkDetail(logId) {
+  const log = BULK_SEND_LOG.find(l => l.id === logId);
+  if (!log) return;
+  const recList = log.recipients.map(r => '\u2022 ' + r.name + ' (' + r.phone + ')').join('\n');
+  const parts = [
+    '\uD83D\uDCE4 \uc120\ud0dd\ubc1c\uc1a1 \uc0c1\uc138',
+    '',
+    '\ubc1c\uc1a1 \uc2dc\uac01: ' + log.timeObj.toLocaleString('ko-KR'),
+    '\uc218\uc2e0\uc790(' + log.recipients.length + '\uba85):',
+    recList,
+    '',
+    '\ubc1c\uc1a1 \ub0b4\uc6a9:',
+    log.content.slice(0, 200) + (log.content.length > 200 ? '...' : '')
+  ];
+  alert(parts.join('\n'));
+}
+
+// ── 전체 실패 재발송 ───────────────────────────────────────
+async function resendAll(dateIdx) {
+  const hist = MOCK_SEND_HISTORY && MOCK_SEND_HISTORY[dateIdx] ? MOCK_SEND_HISTORY[dateIdx] : null; if (!hist) return;
+  if (!hist.failed) return;
+  if (!confirm(`${hist.date} 실패 ${hist.failed}건을 전체 재발송하시겠습니까?`)) return;
+
+  // 전체 재발송 버튼 로딩
+  const allBtn = document.querySelector('.resend-all-btn');
+  if (allBtn) { allBtn.disabled=true; allBtn.innerHTML='<span class="spin" style="border-top-color:var(--red)"></span> 발송 중...'; }
+
+  try {
+    if (API_BASE) await apiPost('/admin/resend-all', { date: hist.dateObj.toISOString().split('T')[0] });
+    await new Promise(r => setTimeout(r, 1400));
+    const prevFailed = hist.failed;
+    // 모든 failedSubsData 성공 처리
+    hist.failedSubsData?.forEach(s => { s.resendStatus = 'success'; });
+    hist.sent   = hist.total;
+    hist.failed = 0;
+    hist.rate   = 100.0;
+    showToast(`${prevFailed}건 전체 재발송 완료`, 'ok');
+    renderSendDetail(dateIdx, 'failed');
+    loadSendHistory();
+    updateFailBadge(); // 전체 재발송 완료 후 배지 즉시 반영
+  } catch(e) { showToast(e.message, 'ng'); }
+}
+
+// ── 콘텐츠 아카이브 ───────────────────────────────────────────
+const MOCK_CONTENT = [];
+
+// ── AI 생성 콘텐츠 저장소 (localStorage 영구 저장) ──────────
+function loadArchiveFromStorage() {
+  try { const s = localStorage.getItem('haru1min_archive'); return s ? JSON.parse(s) : {}; }
+  catch(e) { return {}; }
+}
+function saveArchiveToStorage() {
+  try { localStorage.setItem('haru1min_archive', JSON.stringify(CONTENT_ARCHIVE)); }
+  catch(e) {}
+}
+
+const CONTENT_ARCHIVE = loadArchiveFromStorage();
+
+function saveToArchive(dateStr, data) {
+  CONTENT_ARCHIVE[dateStr] = {
+    cat:         data.category  || data.cat  || 'macro',
+    kw:          data.keyword   || data.kw   || '',
+    headline:    data.headline  || '',
+    body:        data.body      || '',
+    tags:        data.tags      || [],
+    tok:         data.token_used || 0,
+    generatedAt: new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}),
+  };
+  saveArchiveToStorage();
+  // 오늘 날짜면 MOCK_CONTENT[0] 동기화
+  const todayStr = getKSTDateStr();
+  if (dateStr === todayStr) {
+    MOCK_CONTENT[0] = { ...CONTENT_ARCHIVE[dateStr], dateStr, date: new Date().toLocaleDateString('ko-KR') };
+  }
+}
+
+function getArchiveList() {
+  // AI 생성 항목 (CONTENT_ARCHIVE) — dateStr 기준으로 중복 없음
+  const archiveEntries = Object.entries(CONTENT_ARCHIVE)
+    .map(([dateStr, c]) => ({
+      ...c, dateStr,
+      date: new Date(dateStr + 'T12:00:00+09:00').toLocaleDateString('ko-KR'),
+      source: 'generated',
+    }));
+
+  // CONTENT_ARCHIVE에 있는 dateStr 집합
+  const archivedDates = new Set(Object.keys(CONTENT_ARCHIVE));
+
+  // Mock 항목: dateStr 기준으로 CONTENT_ARCHIVE와 중복 완전 제거
+  const mockEntries = MOCK_CONTENT
+    .filter(c => c.dateStr && !archivedDates.has(c.dateStr))
+    .map(c => ({
+      ...c,
+      date: new Date(c.dateStr + 'T12:00:00+09:00').toLocaleDateString('ko-KR'),
+      source: 'mock',
+    }));
+
+  // dateStr 기준 중복 제거 (혹시 모를 경우)
+  const seen = new Set();
+  const all  = [...archiveEntries, ...mockEntries].filter(r => {
+    if (seen.has(r.dateStr)) return false;
+    seen.add(r.dateStr);
+    return true;
+  });
+
+  return all.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+}
+
+const CAT_LABEL = {
+  macro:'거시경제', industry:'산업트렌드', finance:'금융·환율',
+  global:'글로벌경제', startup:'창업·스타트업', special:'머니인사이트',
+  realestate:'부동산', policy:'경제정책', invest:'투자전략',
+  money:'생활경제', trade:'무역·공급망', energy:'에너지·자원',
+  tech:'테크비즈', labor:'고용·노동', weekly:'주간브리핑',
+};
+
+function loadContentArchive() {
+  const catFilter = document.getElementById('contentCatFilter')?.value  || '';
+  const searchVal = (document.getElementById('contentSearch')?.value    || '').toLowerCase().trim();
+  const dateFrom  = document.getElementById('contentDateFrom')?.value   || '';
+  const dateTo    = document.getElementById('contentDateTo')?.value     || '';
+
+  let rows = getArchiveList();
+  if (catFilter) rows = rows.filter(r => r.cat === catFilter);
+  if (dateFrom)  rows = rows.filter(r => r.dateStr >= dateFrom);
+  if (dateTo)    rows = rows.filter(r => r.dateStr <= dateTo);
+  if (searchVal) rows = rows.filter(r =>
+    (r.kw      || '').toLowerCase().includes(searchVal) ||
+    (r.headline|| '').toLowerCase().includes(searchVal) ||
+    (r.date    || '').includes(searchVal) ||
+    (r.dateStr || '').includes(searchVal) ||
+    (r.body    || '').toLowerCase().includes(searchVal)
+  );
+
+  const countEl = document.getElementById('contentCount');
+  if (countEl) countEl.textContent = '총 ' + rows.length + '건';
+
+  const emptyMsg = (searchVal || catFilter || dateFrom || dateTo)
+    ? '검색 결과가 없습니다' : '생성된 콘텐츠가 없습니다';
+
+  document.getElementById('contentBody').innerHTML = rows.length === 0
+    ? '<tr><td colspan="5"><div class="empty"><span class="empty-ico">🔍</span>' + emptyMsg + '</div></td></tr>'
+    : rows.map(function(r) {
+        var aiBadge = r.source === 'generated'
+          ? ' <span style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);color:var(--green);font-size:9px;padding:1px 4px;border-radius:3px">AI</span>'
+          : '';
+        return '<tr onclick="openContentPopupByDate(\'' + r.dateStr + '\')"'
+          + ' style="cursor:pointer"'
+          + ' onmouseover="this.style.background=\'rgba(201,168,76,.04)\'"'
+          + ' onmouseout="this.style.background=\'\'">'
+          + '<td style="font-family:var(--mono);font-size:11px">' + r.date + aiBadge + '</td>'
+          + '<td><span class="badge monthly">' + (CAT_LABEL[r.cat] || r.cat) + '</span></td>'
+          + '<td><strong>' + r.kw + '</strong></td>'
+          + '<td style="color:var(--muted);font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + r.headline + '</td>'
+          + '<td style="font-family:var(--mono);font-size:11px;color:var(--muted)">' + (r.tok || 0) + '</td>'
+          + '</tr>';
+      }).join('');;
+}
+
+function resetContentFilters() {
+  ['contentSearch','contentCatFilter','contentDateFrom','contentDateTo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  loadContentArchive();
+}
+
+function openContentPopupByDate(dateStr) {
+  const archived = CONTENT_ARCHIVE[dateStr];
+  if (archived) {
+    // MOCK_CONTENT 앞에 임시 삽입 후 0번 팝업 열기
+    MOCK_CONTENT.unshift({ ...archived, date: new Date(dateStr + 'T00:00:00+09:00').toLocaleDateString('ko-KR'), dateStr });
+    openContentPopup(0);
+  } else {
+    // mock 데이터에서 날짜 매칭
+    const idx = MOCK_CONTENT.findIndex((c, i) => {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      return d.toISOString().split('T')[0] === dateStr;
+    });
+    openContentPopup(idx >= 0 ? idx : 0);
+  }
+}
+
+let cpCurrentIdx = 0;
+
+function openContentPopup(idx) {
+  cpCurrentIdx = idx;
+  const c = MOCK_CONTENT[idx];
+  if (!c) return;
+  const d = new Date(); d.setDate(d.getDate()-idx);
+
+  document.getElementById('cpDate').textContent         = d.toLocaleDateString('ko-KR') + ' · ' + c.cat;
+  document.getElementById('cpKeyword').textContent      = c.kw;
+  document.getElementById('cpHeadlineView').textContent = c.headline;
+  document.getElementById('cpHeadline').value           = c.headline;
+  document.getElementById('cpHeadline').style.display   = 'none';
+  document.getElementById('cpBody').textContent         = c.body;
+  document.getElementById('cpEditor').value             = c.body;
+  document.getElementById('cpTags').innerHTML           = c.tags.map(t=>`<span class="cc-tag">${t}</span>`).join('');
+  updateCpCharCount(c.body);
+  resetSaveBtn();
+
+  // 항상 미리보기 모드로 열기
+  cpEditMode = false;
+  document.getElementById('cpEditPane').style.display     = 'none';
+  document.getElementById('cpHeadlineView').style.display = 'block';
+  const toggleBtn = document.getElementById('cpEditToggle');
+  if (toggleBtn) {
+    toggleBtn.style.background  = 'rgba(255,255,255,.05)';
+    toggleBtn.style.borderColor = 'var(--b)';
+    toggleBtn.style.color       = 'var(--muted)';
+  }
+  document.getElementById('cpEditToggleIco').textContent = '✏️';
+  document.getElementById('cpEditToggleTxt').textContent = '편집';
+
+  document.getElementById('contentPopup').classList.add('open');
+}
+
+function closeContentPopup() {
+  document.getElementById('contentPopup').classList.remove('open');
+  cpEditMode = false;
+}
+
+let cpEditMode = false;
+
+// 편집 토글 버튼
+function toggleCpEdit() {
+  cpEditMode = !cpEditMode;
+  const editPane     = document.getElementById('cpEditPane');
+  const headlineView = document.getElementById('cpHeadlineView');
+  const headlineInput= document.getElementById('cpHeadline');
+  const toggleBtn    = document.getElementById('cpEditToggle');
+  const toggleIco    = document.getElementById('cpEditToggleIco');
+  const toggleTxt    = document.getElementById('cpEditToggleTxt');
+
+  if (cpEditMode) {
+    // 편집 모드 진입
+    editPane.style.display      = 'block';
+    headlineView.style.display  = 'none';
+    headlineInput.style.display = 'block';
+    // 토글 버튼: 활성 스타일
+    toggleBtn.style.background    = 'rgba(201,168,76,.12)';
+    toggleBtn.style.borderColor   = 'var(--gold)';
+    toggleBtn.style.color         = 'var(--gold)';
+    toggleIco.textContent = '👁️';
+    toggleTxt.textContent = '미리보기';
+    // 저장 버튼 재활성화
+    resetSaveBtn();
+    document.getElementById('cpEditor').focus();
+  } else {
+    // 미리보기 모드 복귀
+    editPane.style.display      = 'none';
+    headlineView.style.display  = 'block';
+    headlineInput.style.display = 'none';
+    // 토글 버튼: 기본 스타일
+    toggleBtn.style.background  = 'rgba(255,255,255,.05)';
+    toggleBtn.style.borderColor = 'var(--b)';
+    toggleBtn.style.color       = 'var(--muted)';
+    toggleIco.textContent = '✏️';
+    toggleTxt.textContent = '편집';
+  }
+}
+
+// 편집 중 입력 → 미리보기 실시간 동기화 + 저장버튼 재활성화
+function onCpEditorInput(val) {
+  document.getElementById('cpBody').textContent = val;
+  updateCpCharCount(val);
+  resetSaveBtn();
+}
+
+function updateCpCharCount(val) {
+  const el = document.getElementById('cpCharCount');
+  if (!el) return;
+  const len = val.length;
+  el.textContent = `${len}자`;
+  el.style.color = len > 1000 ? 'var(--red)' : 'var(--muted)';
+}
+
+function resetSaveBtn() {
+  const btn = document.getElementById('cpSaveBtn');
+  const ico = document.getElementById('cpSaveIco');
+  const txt = document.getElementById('cpSaveTxt');
+  if (!btn) return;
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.style.cursor  = 'pointer';
+  btn.style.background    = 'rgba(74,222,128,.1)';
+  btn.style.borderColor   = 'rgba(74,222,128,.25)';
+  btn.style.color         = 'var(--green)';
+  if (ico) ico.textContent = '💾';
+  if (txt) txt.textContent = '저장';
+}
+
+function saveContentEdit() {
+  const c = MOCK_CONTENT[cpCurrentIdx];
+  if (!c) return;
+  const newHeadline = document.getElementById('cpHeadline')?.value.trim();
+  const newBody     = document.getElementById('cpEditor')?.value.trim();
+  if (newHeadline) {
+    c.headline = newHeadline;
+    const view = document.getElementById('cpHeadlineView');
+    if (view) view.textContent = newHeadline;
+  }
+  if (newBody) {
+    c.body = newBody;
+    document.getElementById('cpBody').textContent = newBody;
+  }
+  loadContentArchive();
+  showToast('콘텐츠가 저장되었습니다', 'ok');
+
+  // 저장 버튼 비활성화 (저장됨 표시)
+  const btn = document.getElementById('cpSaveBtn');
+  const ico = document.getElementById('cpSaveIco');
+  const txt = document.getElementById('cpSaveTxt');
+  if (btn) {
+    btn.disabled = true;
+    btn.style.opacity     = '0.55';
+    btn.style.cursor      = 'default';
+    btn.style.background  = 'rgba(255,255,255,.04)';
+    btn.style.borderColor = 'var(--b)';
+    btn.style.color       = 'var(--muted)';
+  }
+  if (ico) ico.textContent = '✓';
+  if (txt) txt.textContent = '저장됨';
+}
+
+// ── 매출 ─────────────────────────────────────────────────────
+async function loadRevenue() {
+  const data = MOCK.revenue;
+  const maxAmt = Math.max(...data.map(d=>d.amount));
+  const total = data.reduce((s,d)=>s+d.amount,0);
+  const thisMonth = data[data.length-1]?.amount || 0;
+
+  document.getElementById('revMonth').textContent = `₩ ${Math.floor(thisMonth).toLocaleString()}`;
+  document.getElementById('revTotal').textContent = `₩ ${Math.floor(total).toLocaleString()}`;
+  document.getElementById('revCount').textContent = `${Math.floor(thisMonth/9900).toLocaleString()} 건`;
+
+  document.getElementById('revBars').innerHTML = data.map(d=>`
+    <div class="rev-bar-wrap">
+      <div class="rev-bar" style="height:${Math.round(d.amount/maxAmt*100)}%"></div>
+      <div class="rev-bar-label">${d.month}</div>
+    </div>`).join('');
+}
+
+// ── 결제 이력 ─────────────────────────────────────────────────
+function loadPayments() {
+  const mock = MOCK.subscribers.filter(s=>s.plan!=='free').slice(0,8).map((s,i)=>({
+    name:s.name, plan:s.plan, amount:s.plan==='yearly'?79000:9900,
+    status:'paid', order:`haru1min_${Date.now().toString(36).slice(-8)}${i}`,
+    date:new Date(Date.now()-i*86400*1000).toLocaleString('ko-KR'),
+  }));
+  document.getElementById('payBody').innerHTML = mock.map(p=>`
+    <tr>
+      <td style="font-family:var(--mono);font-size:11px">${p.date}</td>
+      <td><strong>${p.name}</strong></td>
+      <td><span class="badge ${p.plan}">${{monthly:'월간',yearly:'연간'}[p.plan]}</span></td>
+      <td style="font-family:var(--mono)">₩${p.amount.toLocaleString()}</td>
+      <td><span class="badge success">결제완료</span></td>
+      <td style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.order}</td>
+    </tr>`).join('');
+}
+
+// ── 설정 ─────────────────────────────────────────────────────
+function loadSettings() { document.getElementById('cfgApi').value = API_BASE; }
+function saveSettings() {
+  API_BASE = document.getElementById('cfgApi').value.trim();
+  localStorage.setItem('apiBase', API_BASE);
+  showToast('설정이 저장되었습니다', 'ok');
+}
+
+// ── 체크박스 & 선택 발송 ─────────────────────────────────────
+
+function onSubCheck() {
+  const checks  = document.querySelectorAll('.sub-check:checked');
+  const countEl = document.getElementById('bulkCount');
+  if (countEl) countEl.textContent = checks.length + '명 선택';
+}
+function toggleCheckAll(cb) {
+  document.querySelectorAll('.sub-check').forEach(c => { c.checked = cb.checked; });
+  onSubCheck();
+}
+
+function selectAllSubs() {
+  document.querySelectorAll('.sub-check').forEach(c => { c.checked = true; });
+  const cb = document.getElementById('checkAll');
+  if (cb) cb.checked = true;
+  onSubCheck();
+}
+
+function deselectAllSubs() {
+  document.querySelectorAll('.sub-check').forEach(c => { c.checked = false; });
+  const cb = document.getElementById('checkAll');
+  if (cb) { cb.checked = false; cb.indeterminate = false; }
+  onSubCheck();
+}
+
+async function sendToSelected() {
+  const checks  = document.querySelectorAll('.sub-check:checked');
+  const ids     = Array.from(checks).map(c => c.dataset.id);
+  const subs    = ids.map(id => STATE.subscribers.find(s => s.id === id)).filter(Boolean);
+  if (!subs.length) return;
+
+  // 모달 제목
+  document.getElementById('bulkSendTitle').textContent = `${subs.length}명에게 발송`;
+
+  // 수신자 칩 목록
+  document.getElementById('bulkRecipientList').innerHTML = subs.map(s => `
+    <span style="display:inline-flex;align-items:center;gap:4px;background:var(--s3);
+                 border:1px solid var(--b);border-radius:4px;padding:3px 8px;font-size:11px">
+      <span style="color:var(--gold);font-weight:600">${s.name}</span>
+      <span style="color:var(--muted);font-size:10px">${s.phone}</span>
+    </span>`).join('');
+
+  // 오늘 콘텐츠 로딩 (CONTENT_ARCHIVE 우선 → API → 빈값)
+  const todayKSTKey  = getKSTDateStr();
+  const todayArchive = (typeof CONTENT_ARCHIVE !== 'undefined') && CONTENT_ARCHIVE[todayKSTKey];
+  let   todayBody    = (todayArchive && todayArchive.body) ? todayArchive.body : '';
+  // CONTENT_ARCHIVE에 없으면 API에서 한 번 더 시도
+  if (!todayBody && API_BASE) {
+    try {
+      const apiContent = await apiFetch('/admin/today-content');
+      if (apiContent && apiContent.body && apiContent.body.length > 10) {
+        todayBody = apiContent.body;
+        if (typeof saveToArchive === 'function') saveToArchive(todayKSTKey, apiContent);
+      }
+    } catch(e) {}
+  }
+  document.getElementById('bulkMsgEditor').value       = todayBody;
+  document.getElementById('bulkCharCount').textContent = todayBody.length + '자';
+  if (!todayBody) showToast('오늘 생성된 콘텐츠가 없습니다. 직접 입력해주세요.', 'ng');
+
+  document.getElementById('bulkSendOverlay').classList.add('open');
+}
+
+function closeBulkSend() {
+  document.getElementById('bulkSendOverlay').classList.remove('open');
+}
+
+async function executeBulkSend() {
+  const btn  = document.getElementById('bulkSendExecBtn');
+  const txt  = document.getElementById('bulkSendTxt');
+  const spin = document.getElementById('bulkSendSpin');
+  const msg  = document.getElementById('bulkMsgEditor').value.trim();
+  if (!msg) { showToast('발송할 내용을 입력해 주세요', 'ng'); return; }
+
+  btn.disabled = true; txt.style.display='none'; spin.style.display='inline';
+
+  const checks    = document.querySelectorAll('.sub-check:checked');
+  const ids       = Array.from(checks).map(c => c.dataset.id);
+  const recipients= ids.map(id => STATE.subscribers.find(s=>s.id===id)).filter(Boolean);
+
+  try {
+    if (!recipients.length) { showToast('구독자를 선택해 주세요', 'ng'); return; }
+
+    // 전화번호 배열 추출
+    const phones = recipients.map(s => s.phone.replace(/-/g,''));
+    console.log('[발송] 수신자:', phones, '내용 길이:', msg.length);
+
+    let sentCount = 0, failCount = 0;
+    let recipientResults = recipients.map(s => ({id:s.id, name:s.name, phone:s.phone, status:'pending'}));
+    let rawRes = null;
+
+    if (API_BASE) {
+      rawRes = await apiPost('/admin/send-selected', { phones, content: msg });
+      console.log('[발송] API 응답:', JSON.stringify(rawRes));
+
+      if (rawRes && rawRes.results) {
+        sentCount = rawRes.sent   || 0;
+        failCount = rawRes.failed || 0;
+        recipientResults = recipients.map(s => {
+          const clean = s.phone.replace(/-/g,'');
+          const r = rawRes.results.find(x => x.phone === clean);
+          const ok = r && r.success;
+          // 실패 시 상세 오류 로그
+          if (!ok && r) console.warn('[발송실패]', s.name, s.phone, JSON.stringify(r.detail));
+          return { id:s.id, name:s.name, phone:s.phone,
+                   status: ok ? 'success' : 'failed',
+                   errorMsg: (!ok && r?.detail?.errorMessage) ? r.detail.errorMessage : '' };
+        });
+      } else if (rawRes && rawRes.success === false) {
+        // API 자체 오류
+        console.error('[발송] API 오류:', rawRes.error);
+        showToast('발송 실패: ' + (rawRes.error || '서버 오류'), 'ng');
+        btn.disabled=false; txt.style.display='inline'; spin.style.display='none';
+        return;
+      } else {
+        sentCount = recipients.length;
+      }
+    } else {
+      sentCount = recipients.length;
+    }
+
+    // 실패 상세 토스트
+    if (failCount > 0 && rawRes?.results) {
+      const failDetails = rawRes.results
+        .filter(r => !r.success)
+        .map(r => r.detail?.errorMessage || r.detail?.errorCode || '알 수 없는 오류')
+        .filter((v,i,a) => a.indexOf(v) === i) // 중복 제거
+        .join(' / ');
+      console.error('[발송실패 상세]', failDetails);
+      showToast('실패 ' + failCount + '건: ' + failDetails, 'ng');
+    }
+
+    // ── 발송 이력 기록 ──────────────────────────────────────
+    const now = new Date();
+    BULK_SEND_LOG.unshift({
+      id:         'bulk_' + now.getTime(),
+      time:       now.toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'}),
+      timeObj:    now,
+      type:       'bulk',
+      recipients: recipientResults,
+      content:    msg,
+      success:    sentCount,
+      failed:     failCount,
+    });
+
+    STATE._todaySent   += sentCount;
+    STATE._todayFailed += failCount;
+
+    closeBulkSend();
+    deselectAllSubs();
+    loadSendHistory();
+    loadSendStatus();
+    loadKPIs();
+    updateFailBadge();
+
+    if (failCount === 0) {
+      showToast(sentCount + '명에게 발송 완료 ✅', 'ok');
+    }
+
+  } catch(e) {
+    console.error('[발송] 예외:', e);
+    STATE._todayFailed += recipients.length;
+    showToast('발송 오류: ' + e.message, 'ng');
+  } finally {
+    btn.disabled=false; txt.style.display='inline'; spin.style.display='none';
+  }
+}
+
+// ── 구독자 관리 모드 트리거 ─────────────────────────────────
+let subIconClickCount = 0, subAdminMode = false, subIconTimer = null;
+
+function countSubIconClick() {
+  subIconClickCount++;
+  clearTimeout(subIconTimer);
+  subIconTimer = setTimeout(() => { subIconClickCount = 0; }, 3000);
+  if (subIconClickCount >= 5) {
+    subIconClickCount = 0;
+    subAdminMode = true;
+    document.getElementById('subAdminToolbar').style.display = 'flex';
+    document.getElementById('subPageTitle').textContent = '🔓 관리 모드 활성화 — 저장 버튼을 누르면 비활성화됩니다';
+    showToast('관리 모드 활성화', 'ok');
+  }
+}
+
+function deactivateSubAdminMode() {
+  subAdminMode = false;
+  document.getElementById('subAdminToolbar').style.display = 'none';
+  document.getElementById('subPageTitle').textContent = '';
+}
+
+// 전화번호 자동 포맷: 숫자만 입력해도 하이픈 자동 삽입
+function autoFmtPhone(input) {
+  let v = input.value.replace(/[^0-9]/g,'');       // 숫자만 추출
+  if (v.length <= 3)       input.value = v;
+  else if (v.length <= 7)  input.value = v.slice(0,3) + '-' + v.slice(3);
+  else                     input.value = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7,11);
+}
+
+// 플랜 변경 시 종료일 자동 계산
+function updateAddSubDates() { updateAddSubEndDate(); }
+function updateAddSubEndDate() {
+  const start = document.getElementById('addSubStartDate').value;
+  if (!start) return;
+  const plan = document.getElementById('addSubPlan').value;
+  const days = plan === 'free' ? 5 : plan === 'monthly' ? 30 : 365;
+  const end  = new Date(start + 'T00:00:00');
+  end.setDate(end.getDate() + days);
+  document.getElementById('addSubEndDate').value = end.toISOString().split('T')[0];
+}
+
+function openAddSubscriber() {
+  ['addSubName','addSubPhone','addSubEmail','addSubMemo'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('addSubPlan').value  = 'free';
+  document.getElementById('addSubHour').value  = '8';
+  document.getElementById('addSubErr').style.display = 'none';
+  // 시작일 = 오늘 KST 날짜 (UTC+9 기준 YYYY-MM-DD)
+  const _kst = new Date(new Date().getTime() + 9*60*60*1000);
+  const todayKST = _kst.toISOString().slice(0,10);
+  document.getElementById('addSubStartDate').value = todayKST;
+  updateAddSubEndDate();
+  document.getElementById('addSubOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('addSubName').focus(), 200);
+}
+function closeAddSubscriber() { document.getElementById('addSubOverlay').classList.remove('open'); }
+
+async function confirmAddSubscriber() {
+  const name    = document.getElementById('addSubName').value.trim();
+  const rawPhone= document.getElementById('addSubPhone').value.trim();
+  const errEl   = document.getElementById('addSubErr');
+  errEl.style.display = 'none';
+
+  // 전화번호 정규화 (하이픈 유무 무관)
+  const digits  = rawPhone.replace(/[^0-9]/g,'');
+  const phone   = digits.length === 11
+    ? digits.slice(0,3)+'-'+digits.slice(3,7)+'-'+digits.slice(7)
+    : rawPhone;
+
+  if (!name)           { errEl.textContent='이름을 입력해 주세요'; errEl.style.display='block'; return; }
+  if (digits.length !== 11) { errEl.textContent='올바른 전화번호를 입력해 주세요 (11자리)'; errEl.style.display='block'; return; }
+  if (STATE.subscribers.find(s => s.phone.replace(/-/g,'') === digits)) {
+    errEl.textContent='이미 등록된 전화번호입니다'; errEl.style.display='block'; return;
+  }
+
+  const plan      = document.getElementById('addSubPlan').value;
+  const hour      = parseInt(document.getElementById('addSubHour').value);
+  const startDate = document.getElementById('addSubStartDate').value || getKSTDateStr();
+  const endDate   = document.getElementById('addSubEndDate').value;
+  const email     = document.getElementById('addSubEmail')?.value.trim() || '';
+  const memo      = document.getElementById('addSubMemo')?.value.trim() || null;
+
+  // 시작일 KST 00:00:00 고정 (서버 한국시간 기준)
+  const createdAt = startDate + 'T00:00:00+09:00';
+  const endAt     = endDate   ? endDate + 'T23:59:59+09:00' : null;
+  const emailVal  = email || null;   // 미입력 시 null
+  const memoVal   = memo  || null;   // 미입력 시 null
+
+  STATE.subscribers.unshift({
+    id:         'sub_manual_' + Date.now(),
+    name, phone,
+    email:      emailVal,
+    memo:       memoVal,
+    plan,
+    status:     plan === 'free' ? 'trial' : 'active',
+    send_hour:  hour,
+    created_at: createdAt,
+    end_date:   endAt,
+  });
+
+  // 입력창에 정규화된 전화번호 반영
+  document.getElementById('addSubPhone').value = phone;
+
+  closeAddSubscriber();
+  saveSubsToStorage();
+  await loadSubscribers();
+  await loadRecentSubs();
+  loadKPIs();
+  showToast(name + ' 님이 추가되었습니다 ✅', 'ok');
+}
+
+async function deleteSelectedSubs() {
+  const checks = document.querySelectorAll('.sub-check:checked');
+  if (!checks.length) { showToast('삭제할 구독자를 선택해 주세요', 'ng'); return; }
+  const ids   = new Set(Array.from(checks).map(c => c.dataset.id));
+  const names = STATE.subscribers.filter(s => ids.has(s.id)).map(s => s.name).join(', ');
+  if (!confirm(names + ' 님을 목록에서 삭제하시겠습니까?')) return;
+  STATE.subscribers = STATE.subscribers.filter(s => !ids.has(s.id));
+  saveSubsToStorage();
+  deselectAllSubs();
+  await loadSubscribers();
+  await loadRecentSubs();
+  loadKPIs();
+  showToast(ids.size + '명이 삭제되었습니다', 'ok');
+}
+
+function saveSubChanges() {
+  saveSubsToStorage();
+  showToast('저장 완료', 'ok');
+  deactivateSubAdminMode();
+}
+
+// ── 구독자 상세 팝업 ─────────────────────────────────────────
+let sdCurrentId = null;
+
+function openSubDetail(id) {
+  const sub = STATE.subscribers.find(s => s.id === id);
+  if (!sub) return;
+  sdCurrentId = id;
+
+  document.getElementById('sdName').textContent          = sub.name;
+  document.getElementById('sdInputName').value           = sub.name;
+  document.getElementById('sdInputPhone').value          = sub.phone;
+  document.getElementById('sdInputPlan').value           = sub.plan;
+  document.getElementById('sdInputStatus').value         = sub.status;
+  document.getElementById('sdInputHour').value           = String(sub.send_hour || 8);
+  const sdCd = new Date(sub.created_at);
+  document.getElementById('sdCreatedAt').innerHTML = `${sdCd.toLocaleDateString('ko-KR')} <span style="color:var(--gold)">${sdCd.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</span>`;
+  document.getElementById('sdEndDate').textContent       = sub.end_date
+    ? new Date(sub.end_date).toLocaleDateString('ko-KR')
+    : '—';
+  document.getElementById('sdInputEmail').value          = sub.email || '';
+  document.getElementById('sdInputMemo').value           = sub.memo  || '';
+
+  // 저장버튼 초기화
+  const btn = document.getElementById('sdSaveBtn');
+  if (btn) { btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer'; btn.textContent='💾 저장'; }
+
+  document.getElementById('subDetailOverlay').classList.add('open');
+}
+
+function closeSubDetail() {
+  document.getElementById('subDetailOverlay').classList.remove('open');
+  sdCurrentId = null;
+}
+
+function saveSubDetail() {
+  const sub = STATE.subscribers.find(s => s.id === sdCurrentId);
+  if (!sub) return;
+
+  sub.name      = document.getElementById('sdInputName').value.trim()  || sub.name;
+  sub.phone     = document.getElementById('sdInputPhone').value.trim()  || sub.phone;
+  sub.plan      = document.getElementById('sdInputPlan').value;
+  sub.status    = document.getElementById('sdInputStatus').value;
+  sub.send_hour = Number(document.getElementById('sdInputHour').value);
+  sub.email     = document.getElementById('sdInputEmail').value.trim()  || null;
+  sub.memo      = document.getElementById('sdInputMemo').value.trim()   || null;
+
+  // 헤더 이름 갱신
+  document.getElementById('sdName').textContent = sub.name;
+
+  // 저장 완료 표시
+  const btn = document.getElementById('sdSaveBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.style.opacity = '0.55';
+    btn.style.cursor  = 'default';
+    btn.textContent   = '✓ 저장됨';
+  }
+
+  // 테이블 갱신
+  saveSubsToStorage();
+  loadSubscribers();
+  loadRecentSubs();
+  loadKPIs();
+  showToast(`${sub.name} 님 정보가 저장되었습니다`, 'ok');
+}
+
+// ── 발송 시간 변경 ────────────────────────────────────────────
+async function changeHour(id, name, currentHour) {
+  const hours = [7, 8, 9];
+  const labels = { 7:'오전 7시', 8:'오전 8시', 9:'오전 9시' };
+  const choice = await showHourPicker(name, currentHour);
+  if (!choice || choice === currentHour) return;
+  try {
+    if (API_BASE) await apiPost(`/api/subscriber/${id}/hour`, { send_hour: choice });
+    const sub = STATE.subscribers.find(s => s.id === id);
+    if (sub) sub.send_hour = choice;
+    showToast(`${name} 님 발송 시간이 ${labels[choice]}로 변경되었습니다`, 'ok');
+    loadSubscribers();
+  } catch(e) { showToast(e.message, 'ng'); }
+}
+
+function showHourPicker(name, currentHour) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('hourPickerOverlay');
+    document.getElementById('hpName').textContent = name;
+    // 버튼 상태 초기화
+    [7,8,9].forEach(h => {
+      const btn = document.getElementById(`hpBtn${h}`);
+      if (btn) btn.className = 'hp-btn' + (h === currentHour ? ' active' : '');
+    });
+    overlay.classList.add('open');
+    // 이벤트 리스너
+    window._hpResolve = resolve;
+  });
+}
+function selectHourPick(h) {
+  [7,8,9].forEach(hh => {
+    const btn = document.getElementById(`hpBtn${hh}`);
+    if (btn) btn.className = 'hp-btn' + (hh === h ? ' active' : '');
+  });
+  window._hpResolve && window._hpResolve(h);
+  document.getElementById('hourPickerOverlay').classList.remove('open');
+  window._hpResolve = null;
+}
+function closeHourPicker() {
+  window._hpResolve && window._hpResolve(null);
+  document.getElementById('hourPickerOverlay').classList.remove('open');
+  window._hpResolve = null;
+}
+
+// ── 해지/취소 처리 ────────────────────────────────────────────
+async function cancelSub(id, name) {
+  const sub = STATE.subscribers.find(s => s.id === id);
+  const isTrial = sub?.status === 'trial';
+  const label = isTrial ? '체험 취소' : '구독 해지';
+  const msg   = isTrial
+    ? `${name} 님의 무료 체험을 취소하시겠습니까?
+취소 즉시 발송이 중단됩니다.`
+    : `${name} 님의 구독을 해지하시겠습니까?`;
+  if (!confirm(msg)) return;
+  try {
+    if (API_BASE) await apiPost(`/api/cancel/${id}`, { reason: label });
+    const s = STATE.subscribers.find(s => s.id === id);
+    if (s) s.status = 'cancelled';
+    showToast(`${name} 님 ${label} 완료`, 'ok');
+    loadSubscribers();
+    loadRecentSubs();
+    updateFailBadge();
+  } catch(e) { showToast(e.message, 'ng'); }
+}
+
+// ── 구독 복구 ─────────────────────────────────────────────────
+async function restoreSub(id, name, targetStatus) {
+  const label = targetStatus === 'trial' ? '체험' : '활성';
+  if (!confirm(`${name} 님의 구독을 ${label} 상태로 복구하시겠습니까?`)) return;
+  try {
+    if (API_BASE) {
+      await apiPost(`/api/restore/${id}`, { status: targetStatus });
+    }
+    const sub = MOCK.subscribers.find(s => s.id === id);
+    if (sub) { sub.status = targetStatus; if (targetStatus === 'active') sub.plan = sub.plan === 'free' ? 'monthly' : sub.plan; }
+    showToast(`${name} 님이 ${label} 상태로 복구되었습니다`, 'ok');
+    loadSubscribers();
+    loadRecentSubs();
+  } catch(e) { showToast(e.message, 'ng'); }
+}
+
+// ── 즉시 발송 ─────────────────────────────────────────────────
+function confirmSendNow() { document.getElementById('sendConfirm').classList.add('open'); }
+function closeSendConfirm() { document.getElementById('sendConfirm').classList.remove('open'); }
+async function executeSendNow() {
+  closeSendConfirm();
+  const btn = document.getElementById('sendNowBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 발송 중...';
+  try {
+    const activeSubs = STATE.subscribers.filter(s => ['active','trial'].includes(s.status));
+    const phones     = activeSubs.map(s => s.phone.replace(/-/g,''));
+    const todayContent = CONTENT_ARCHIVE[getKSTDateStr()];
+    const text       = todayContent ? todayContent.body : '하루1분경제 브리핑';
+
+    let sentCount = 0, failCount = 0;
+    if (API_BASE && phones.length > 0) {
+      const res = await apiPost('/admin/send-selected', { phones: phones, content: text });
+      if (res) {
+        sentCount = res.sent   || activeSubs.length;
+        failCount = res.failed || 0;
+      }
+    } else {
+      sentCount = activeSubs.length;
+    }
+
+    STATE._todaySent   += sentCount;
+    STATE._todayFailed += failCount;
+
+    const toastMsg = failCount > 0
+      ? `완료 ${sentCount}명 / 실패 ${failCount}명`
+      : `${sentCount}명에게 발송 완료 ✅`;
+    showToast(toastMsg, failCount > 0 ? 'ng' : 'ok');
+    loadSendStatus();
+    loadKPIs();
+    loadSendHistory();
+  } catch(e) {
+    STATE._todayFailed += STATE.subscribers.filter(s => ['active','trial'].includes(s.status)).length;
+    showToast('발송 오류: ' + e.message, 'ng');
+  }
+  finally { setTimeout(()=>{ btn.disabled=false; btn.innerHTML='<span>📤</span> 지금 발송'; }, 3000); }
+}
+
+// ── 캘린더 날짜 선택 팝업 ──────────────────────────────────
+// KST 날짜 반환 (YYYY-MM-DD)
+function getKSTDateStr(offsetDays = 0) {
+  const now = new Date();
+  // KST = UTC + 9시간
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  kst.setDate(kst.getDate() + offsetDays);
+  return kst.toISOString().split('T')[0];
+}
+
+function openCalendarPicker() {
+  const today = getKSTDateStr();
+  document.getElementById('calStartDate').value = today;
+  document.getElementById('calEndDate').value   = today;
+  // 중지 플래그 초기화
+  calGenerateStop = false;
+  // 버튼 초기 상태로 복원
+  const btn = document.getElementById('calGenerateBtn');
+  const txt = document.getElementById('calGenerateTxt');
+  btn.style.background = '';
+  btn.style.borderColor = '';
+  btn.style.color = '';
+  btn.onclick = executeCalGenerate;
+  txt.textContent = '📅 1일 생성하기';
+  btn.disabled = false;
+  updateCalPreview();
+  document.getElementById('calendarPickerOverlay').classList.add('open');
+}
+
+function closeCalendarPicker() {
+  document.getElementById('calendarPickerOverlay').classList.remove('open');
+}
+
+function setCalRange(startOffset, endOffset) {
+  document.getElementById('calStartDate').value = getKSTDateStr(startOffset);
+  document.getElementById('calEndDate').value   = getKSTDateStr(endOffset);
+  updateCalPreview();
+}
+
+function updateCalPreview() {
+  const s = document.getElementById('calStartDate').value;
+  const e = document.getElementById('calEndDate').value;
+  const btn = document.getElementById('calGenerateBtn');
+  const preview = document.getElementById('calPreview');
+  if (!s || !e) {
+    preview.innerHTML = '날짜를 선택하면 생성할 콘텐츠 정보가 표시됩니다';
+    btn.disabled = true; return;
+  }
+  if (s > e) {
+    preview.innerHTML = '<span style="color:var(--red)">⚠️ 시작일이 종료일보다 늦습니다</span>';
+    btn.disabled = true; return;
+  }
+  const days = Math.round((new Date(e) - new Date(s)) / (1000*60*60*24)) + 1;
+  const approxCost = (days * 0.003).toFixed(2);
+  preview.innerHTML = '<div style="text-align:center;width:100%">' +
+    '<div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:4px">' + days + '일치 콘텐츠 생성</div>' +
+    '<div style="color:var(--muted)">' + s + ' ~ ' + e + '</div>' +
+    '<div style="margin-top:4px;font-size:11px;color:var(--muted)">예상 비용 약 $' + approxCost + ' (건당 $0.003)</div>' +
+    '</div>';
+  btn.disabled = false;
+  document.getElementById('calGenerateTxt').textContent = '📅 ' + days + '일 생성하기';
+}
+
+let calGenerateStop = false;
+
+function stopCalGenerate() {
+  calGenerateStop = true;
+  const btn = document.getElementById('calGenerateBtn');
+  const txt = document.getElementById('calGenerateTxt');
+  btn.disabled = true;
+  txt.textContent = '중지 중...';
+  showToast('현재 항목 완료 후 중지됩니다...', 'ng');
+}
+
+async function executeCalGenerate() {
+  const s = document.getElementById('calStartDate').value;
+  const e = document.getElementById('calEndDate').value;
+  if (!s || !e || s > e) return;
+
+  const startDate = new Date(s);
+  const days = Math.round((new Date(e) - startDate) / (1000*60*60*24)) + 1;
+
+  // ── 중복 날짜 확인 ─────────────────────────────────────────
+  const dupDates = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(startDate); d.setDate(startDate.getDate() + i);
+    const dateStr = d.toISOString().split('T')[0];
+    if (CONTENT_ARCHIVE[dateStr]) dupDates.push(dateStr);
+  }
+
+  if (dupDates.length > 0) {
+    const dupList = dupDates.slice(0, 5).join(', ') + (dupDates.length > 5 ? ' 외 ' + (dupDates.length-5) + '건' : '');
+    const confirmed = confirm(
+      '⚠️ 아래 날짜는 이미 생성된 콘텐츠가 있습니다.\n\n' + dupList + '\n\n' +
+      '계속하면 해당 날짜의 콘텐츠가 새로 생성된 내용으로 덮어씌워집니다.\n생성하시겠습니까?'
+    );
+    if (!confirmed) return;
+  }
+
+  const btn  = document.getElementById('calGenerateBtn');
+  const txt  = document.getElementById('calGenerateTxt');
+  const spin = document.getElementById('calGenerateSpin');
+  const preview = document.getElementById('calPreview');
+
+  calGenerateStop = false;
+
+  // 팝업 유지 + 버튼을 중지 버튼으로 변경
+  btn.onclick = stopCalGenerate;
+  btn.style.background  = 'rgba(248,113,113,.15)';
+  btn.style.borderColor = 'rgba(248,113,113,.4)';
+  btn.style.color       = 'var(--red)';
+  txt.textContent = '⏹ 중지';
+  txt.style.display  = 'inline';
+  spin.style.display = 'none';
+  btn.disabled = false;
+
+  // 취소 버튼도 비활성
+  const cancelBtn = btn.previousElementSibling;
+  if (cancelBtn) cancelBtn.disabled = true;
+
+  let successCount = 0, failCount = 0;
+
+  for (let i = 0; i < days; i++) {
+    if (calGenerateStop) break;
+
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + i);
+    const dateStr = d.toISOString().split('T')[0];
+    const isDup = !!CONTENT_ARCHIVE[dateStr];
+
+    // 진행 상황 미리보기에 표시
+    preview.innerHTML = '<div style="text-align:center;width:100%">' +
+      '<div style="font-size:13px;color:var(--gold);margin-bottom:6px">⏳ 생성 중... ' + (i+1) + '/' + days + '</div>' +
+      '<div style="font-size:12px;color:var(--muted)">' + dateStr + (isDup ? ' <span style="color:var(--amber);font-size:10px">(덮어쓰기)</span>' : '') + '</div>' +
+      '<div style="margin-top:8px;background:var(--b);border-radius:4px;height:4px;overflow:hidden">' +
+        '<div style="background:var(--gold);height:4px;width:' + Math.round((i/days)*100) + '%;transition:width .3s"></div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">완료 ' + successCount + '/' + days + '</div>' +
+      '</div>';
+
+    try {
+      let result = null;
+      if (API_BASE) {
+        result = await apiPost('/admin/generate-content', { date: dateStr });
+      } else {
+        await new Promise(r => setTimeout(r, 600));
+        result = { success: true, date: dateStr, keyword: '테스트키워드', headline: dateStr + ' 테스트 브리핑',
+          body: dateStr + ' 생성된 콘텐츠 내용', tags: ['테스트'], category: 'macro' };
+      }
+      if (result && result.success !== false) {
+        saveToArchive(dateStr, result);  // 덮어쓰기 포함
+        successCount++;
+      } else {
+        failCount++;
+      }
+    } catch(err) {
+      failCount++;
+    }
+    // 아카이브 즉시 갱신 (생성마다)
+    loadContentArchive();
+
+    if (i < days - 1 && !calGenerateStop) await new Promise(r => setTimeout(r, 1500));
+  }
+
+  // 완료 후 팝업 닫기
+  closeCalendarPicker();
+
+  // 버튼 초기화
+  btn.style.background  = '';
+  btn.style.borderColor = '';
+  btn.style.color       = '';
+  btn.onclick = executeCalGenerate;
+  txt.textContent = '📅 생성하기';
+  btn.disabled = false;
+  if (cancelBtn) cancelBtn.disabled = false;
+  calGenerateStop = false;
+
+  // 아카이브 최종 갱신
+  loadContentArchive();
+  loadTodayContent();
+  showPage('content');
+
+  const isOk = !calGenerateStop && failCount === 0;
+  const msg  = calGenerateStop
+    ? '중지됨 — 완료 ' + successCount + '건'
+    : isOk ? successCount + '일치 생성 완료 🎉' : '완료 ' + successCount + '건 / 실패 ' + failCount + '건';
+  showToast(msg, isOk ? 'ok' : (calGenerateStop ? 'ok' : 'ng'));
+}
+
+async function generateContent() {
+  const btn = event?.currentTarget;
+  const origHTML = btn?.innerHTML;
+  if (btn) { btn.disabled=true; btn.innerHTML='<span class="spin"></span> 생성 중...'; }
+  try {
+    let result = null;
+    if (API_BASE) {
+      result = await apiPost('/admin/generate-content');
+    } else {
+      await new Promise(r=>setTimeout(r,1200));
+    }
+    // API 응답을 아카이브에 저장
+    if (result && result.success) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      saveToArchive(result.date || todayStr, result);
+    }
+    showToast('오늘의 콘텐츠가 생성되었습니다', 'ok');
+    loadContentArchive();
+    loadTodayContent();
+    showPage('content');
+    const todayKey = new Date().toISOString().split('T')[0];
+    setTimeout(() => openContentPopupByDate(todayKey), 300);
+  } catch(e) { showToast(e.message, 'ng'); }
+  finally { if (btn) { btn.disabled=false; btn.innerHTML=origHTML; } }
+}
+
+// ── Toast ────────────────────────────────────────────────────
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = (type==='ok'?'✅ ':'❌ ') + msg;
+  t.className = `toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+// ── 로그인 로직 ──────────────────────────────────────────────
+const ADMIN_ID = 'admin';
+const ADMIN_PW = 'admin';
+let logoClickCount = 0;
+let pwUnlocked = false;
+
+function handleLogoClick() {
+  logoClickCount++;
+  // 로고 클릭 애니메이션
+  const img = document.getElementById('loginLogoImg');
+  img.classList.remove('pulse');
+  void img.offsetWidth;
+  img.classList.add('pulse');
+  // 5번 클릭 시 비밀번호 입력란 활성화
+  if (logoClickCount >= 5) {
+    pwUnlocked = true;
+    const pw = document.getElementById('pwFieldWrap');
+    if (pw) {
+      pw.style.display = 'block';
+      document.getElementById('loginPw')?.focus();
+    }
+    logoClickCount = 0;
+  }
+}
+
+function doLogin() {
+  const id = document.getElementById('loginId')?.value.trim();
+  const pw = pwUnlocked ? document.getElementById('loginPw')?.value.trim() : ADMIN_PW;
+  const errEl = document.getElementById('loginErr');
+
+  // 비밀번호 활성화 전: 아무 반응 없이 무시
+  if (!pwUnlocked) { return; }
+
+  if (id === ADMIN_ID && pw === ADMIN_PW) {
+    document.getElementById('loginScreen').style.display = 'none';
+    loadPage('overview');
+  } else {
+    if (errEl) { errEl.style.display='block'; errEl.style.color='var(--red)'; errEl.textContent='아이디 또는 비밀번호가 올바르지 않습니다'; }
+    document.getElementById('loginId').classList.add('err');
+    setTimeout(() => document.getElementById('loginId').classList.remove('err'), 1500);
+  }
+}
+
+// ── 초기 로드 ─────────────────────────────────────────────────
+// [테스트 모드] 로그인 화면 자동 숨김
+document.getElementById('loginScreen').style.display = 'none';
+loadPage('overview');
+
+// 30초마다 자동 갱신 (개요: KPI + 발송현황 동시)
+setInterval(async () => {
+  if (currentPage === 'overview') {
+    await loadSendStatus();  // updateFailBadge 내부 호출 포함
+    await loadKPIs();
+  } else {
+    // 다른 페이지에서도 배지는 항상 최신으로
+    updateFailBadge();
+  }
+}, 30000);
+
+// ── 개별 재발송 ───────────────────────────────────────────────
+async function retrySingleSend(phone, name) {
+  const todayContent = (typeof CONTENT_ARCHIVE !== 'undefined') && CONTENT_ARCHIVE[getKSTDateStr()];
+  const text = todayContent ? todayContent.body : '하루1분경제 브리핑';
+  try {
+    const res = await apiPost('/admin/send-selected', { phones: [phone], content: text });
+    if (res && res.sent > 0) {
+      showToast(name + ' 님 재발송 성공 ✅', 'ok');
+      STATE._todaySent++;
+      STATE._todayFailed = Math.max(0, STATE._todayFailed - 1);
+    } else {
+      showToast(name + ' 님 재발송 실패', 'ng');
+    }
+    loadSendStatus(); loadKPIs(); loadSendHistory();
+  } catch(e) { showToast('재발송 오류: ' + e.message, 'ng'); }
+}
+
+// ── 실패 전체 재발송 ──────────────────────────────────────────
+async function retryAllFailed(dateStr) {
+  const logs = BULK_SEND_LOG.filter(l => {
+    const d = new Date(l.timeObj || l.time);
+    return new Date(d.getTime()+9*3600000).toISOString().slice(0,10) === dateStr;
+  });
+  const failedPhones = logs.flatMap(l => l.recipients||[])
+    .filter(r => r.status === 'failed')
+    .map(r => (r.phone||'').replace(/-/g,''))
+    .filter(Boolean);
+  if (!failedPhones.length) { showToast('재발송할 실패 건이 없습니다', 'ng'); return; }
+  const todayContent = (typeof CONTENT_ARCHIVE !== 'undefined') && CONTENT_ARCHIVE[getKSTDateStr()];
+  const text = todayContent ? todayContent.body : '하루1분경제 브리핑';
+  try {
+    const res = await apiPost('/admin/send-selected', { phones: failedPhones, content: text });
+    const sent = res.sent || 0;
+    showToast('재발송 완료 ' + sent + '건', sent > 0 ? 'ok' : 'ng');
+    STATE._todaySent   += sent;
+    STATE._todayFailed  = Math.max(0, STATE._todayFailed - sent);
+    loadSendStatus(); loadKPIs(); loadSendHistory();
+  } catch(e) { showToast('재발송 오류: ' + e.message, 'ng'); }
+}
+
+</script>
+</body>
+</html>
