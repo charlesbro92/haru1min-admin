@@ -2826,13 +2826,22 @@ async function confirmAddSubscriber() {
 
   // 시작일 KST 00:00:00 고정 (서버 한국시간 기준)
   const createdAt = startDate + 'T00:00:00+09:00';
-  const endAt     = endDate   ? endDate + 'T23:59:59+09:00' : null;
-  const emailVal  = email || null;   // 미입력 시 null
-  const memoVal   = memo  || null;   // 미입력 시 null
+  // 종료일 자동계산 (미입력 시 플랜별 자동)
+  let endAt = null;
+  if (endDate) {
+    endAt = endDate + 'T23:59:59+09:00';
+  } else {
+    const start = new Date(createdAt);
+    if (plan === 'free')    endAt = new Date(start.getTime() + 5*86400000).toISOString();
+    else if (plan === 'monthly') endAt = new Date(start.getTime() + 30*86400000).toISOString();
+    else if (plan === 'yearly')  endAt = new Date(start.getTime() + 365*86400000).toISOString();
+  }
+  const emailVal = email || null;
+  const memoVal  = memo  || null;
 
-  STATE.subscribers.unshift({
+  const newSub = {
     id:         'sub_manual_' + Date.now(),
-    name, phone,
+    name, phone: phone.replace(/-/g,''),
     email:      emailVal,
     memo:       memoVal,
     plan,
@@ -2840,11 +2849,18 @@ async function confirmAddSubscriber() {
     send_hour:  hour,
     created_at: createdAt,
     end_date:   endAt,
-  });
+  };
 
-  // 입력창에 정규화된 전화번호 반영
+  // DB에도 저장
+  if (API_BASE) {
+    try {
+      const res = await apiPost('/admin/subscribers', newSub);
+      if (res && res.data && res.data[0]) newSub.id = res.data[0].id;
+    } catch(e) { console.warn('DB 저장 실패:', e); }
+  }
+
+  STATE.subscribers.unshift(newSub);
   document.getElementById('addSubPhone').value = phone;
-
   closeAddSubscriber();
   saveSubsToStorage();
   await loadSubscribers();
