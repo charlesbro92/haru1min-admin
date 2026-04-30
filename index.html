@@ -2920,36 +2920,41 @@ function closeSubDetail() {
   sdCurrentId = null;
 }
 
-function saveSubDetail() {
+async function saveSubDetail() {
   const sub = STATE.subscribers.find(s => s.id === sdCurrentId);
   if (!sub) return;
 
+  const btn = document.getElementById('sdSaveBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
+
   sub.name      = document.getElementById('sdInputName').value.trim()  || sub.name;
-  sub.phone     = document.getElementById('sdInputPhone').value.trim()  || sub.phone;
+  sub.phone     = document.getElementById('sdInputPhone').value.replace(/-/g,'').trim() || sub.phone;
   sub.plan      = document.getElementById('sdInputPlan').value;
   sub.status    = document.getElementById('sdInputStatus').value;
   sub.send_hour = Number(document.getElementById('sdInputHour').value);
   sub.email     = document.getElementById('sdInputEmail').value.trim()  || null;
   sub.memo      = document.getElementById('sdInputMemo').value.trim()   || null;
 
-  // 헤더 이름 갱신
-  document.getElementById('sdName').textContent = sub.name;
-
-  // 저장 완료 표시
-  const btn = document.getElementById('sdSaveBtn');
-  if (btn) {
-    btn.disabled = true;
-    btn.style.opacity = '0.55';
-    btn.style.cursor  = 'default';
-    btn.textContent   = '✓ 저장됨';
+  if (API_BASE) {
+    try {
+      await fetch(API_BASE + '/admin/subscribers/' + sub.id, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          name: sub.name, phone: sub.phone, plan: sub.plan,
+          status: sub.status, send_hour: sub.send_hour,
+          email: sub.email, memo: sub.memo,
+        })
+      });
+    } catch(e) { console.warn('DB 업데이트 실패:', e); }
   }
 
-  // 테이블 갱신
   saveSubsToStorage();
   loadSubscribers();
   loadRecentSubs();
   loadKPIs();
-  showToast(`${sub.name} 님 정보가 저장되었습니다`, 'ok');
+  showToast(sub.name + ' 님 정보가 저장되었습니다', 'ok');
+  closeSubDetail();
 }
 
 // ── 발송 시간 변경 ────────────────────────────────────────────
