@@ -1559,7 +1559,9 @@ async function loadSubscribers() {
       const res = await apiFetch('/admin/subscribers?limit=200');
       if (res && res.data && res.data.length > 0) {
         // DB 데이터를 STATE에 병합 (phone 기준 중복 제거)
-        const dbSubs = res.data.map(s => ({
+        const dbSubs = res.data
+          .filter(s => !s.hidden)
+          .map(s => ({
           id:         s.id,
           name:       s.name || '',
           phone:      s.phone || '',
@@ -2865,13 +2867,25 @@ async function deleteSelectedSubs() {
   const ids   = new Set(Array.from(checks).map(c => c.dataset.id));
   const names = STATE.subscribers.filter(s => ids.has(s.id)).map(s => s.name).join(', ');
   if (!confirm(names + ' 님을 목록에서 삭제하시겠습니까?')) return;
+  // DB hidden=true 업데이트
+  if (typeof API_BASE !== 'undefined' && API_BASE) {
+    for (const id of ids) {
+      try {
+        await fetch(API_BASE + '/admin/subscribers/' + id, {
+          method: 'PUT',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({hidden: true})
+        });
+      } catch(e) { console.warn('hidden 업데이트 실패:', id, e); }
+    }
+  }
   STATE.subscribers = STATE.subscribers.filter(s => !ids.has(s.id));
   saveSubsToStorage();
   deselectAllSubs();
   await loadSubscribers();
   await loadRecentSubs();
   loadKPIs();
-  showToast(ids.size + '명이 삭제되었습니다', 'ok');
+  showToast(ids.size + '명이 목록에서 숨겨졌습니다', 'ok');
 }
 
 function saveSubChanges() {
