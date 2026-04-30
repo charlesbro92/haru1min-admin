@@ -1342,7 +1342,7 @@ function loadKPIs() {
     '<span class="up">↑ ' + new7d + '명</span> 최근 7일');
   setKPI('kpi-paid',  paid.toLocaleString() + ' 명', 'green',
     '월간 ' + monthly + ' + 연간 ' + yearly);
-  setKPI('kpi-rev',   '₩ ' + Math.floor(rev).toLocaleString(), 'blue', '이번 달 추정');
+  setKPI('kpi-rev',   '₩ ' + Math.floor(rev).toLocaleString('ko-KR') + '원', 'blue', '이번 달 추정');
   setKPI('kpi-send', send.sent + ' 건', 'amber',
     '( 완료 ' + send.sent + ' · 실패 <span style="color:' + (send.failed>0?'var(--red)':'var(--muted)') + '">' + send.failed + ' )</span>');
 }
@@ -1664,7 +1664,12 @@ async function loadSubscribers() {
       </td>
       <td><strong>${s.name}</strong>${newBadge}</td>
       <td class="t-phone" style="font-size:12px">${s.phone}</td>
-      <td><span class="badge ${s.plan}">${{monthly:'월간',yearly:'연간',free:'무료'}[s.plan]||s.plan}</span></td>
+      <td>
+        <span class="badge ${s.plan}">${{monthly:'월간',yearly:'연간',free:'무료'}[s.plan]||s.plan}</span>
+        <span style="font-size:10px;color:var(--muted);display:block;margin-top:2px;font-family:var(--mono)">
+          ${{monthly:'₩9,900/월',yearly:'₩79,000/년',free:'무료'}[s.plan]||''}
+        </span>
+      </td>
       <td><span class="badge ${s.status}"><span class="badge-dot"></span>${{active:'활성',trial:'체험',cancelled:'해지',expired:'만료'}[s.status]||s.status}</span></td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--gold)">${hourLabel}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${joinTimeStr}</td>
