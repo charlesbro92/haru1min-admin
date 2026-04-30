@@ -1307,8 +1307,8 @@ const MOCK = STATE;
 
 // ── 파생 통계: STATE에서 실시간 계산 ────────────────────────
 function getStats() {
-  const subs = STATE.subscribers;
-  const active   = subs.filter(s => ['active','trial'].includes(s.status) && s.deleted_at == null);
+  const subs = STATE.subscribers.filter(s => !s.hidden);
+  const active   = subs.filter(s => ['active','trial'].includes(s.status));
   const trial    = subs.filter(s => s.status === 'trial');
   const monthly  = subs.filter(s => s.status === 'active' && s.plan === 'monthly');
   const yearly   = subs.filter(s => s.status === 'active' && s.plan === 'yearly');
@@ -1321,31 +1321,23 @@ function getStats() {
 }
 
 // ── KPI 로드 (STATE 기반 실시간) ─────────────────────────────
-async function loadKPIs() {
-  const data = await apiFetch('/admin/stats') || {};
-  const send = STATE.today_send;
+function loadKPIs() {
+  const subs    = STATE.subscribers.filter(s => !s.hidden);
+  const active  = subs.filter(s => s.status === 'active').length;
+  const trial   = subs.filter(s => s.status === 'trial').length;
+  const monthly = subs.filter(s => s.plan === 'monthly' && s.status === 'active').length;
+  const yearly  = subs.filter(s => s.plan === 'yearly'  && s.status === 'active').length;
+  const now     = Date.now();
+  const new7d   = subs.filter(s => now - new Date(s.created_at) < 7*86400*1000).length;
+  const total   = active + trial;
+  const paid    = monthly + yearly;
+  const rev     = monthly * 9900 + yearly * (79000/12);
+  const send    = STATE.today_send;
 
-  // STATE 실제 데이터로 수치 보정
-  const activeCount  = STATE.subscribers.length > 0
-    ? STATE.subscribers.filter(s => s.status === 'active').length
-    : (data.active_count || 0);
-  const trialCount   = STATE.subscribers.length > 0
-    ? STATE.subscribers.filter(s => s.status === 'trial').length
-    : (data.trial_count || 0);
-  const monthlyCount = STATE.subscribers.length > 0
-    ? STATE.subscribers.filter(s => s.plan === 'monthly' && s.status === 'active').length
-    : (data.monthly_count || 0);
-  const yearlyCount  = STATE.subscribers.length > 0
-    ? STATE.subscribers.filter(s => s.plan === 'yearly'  && s.status === 'active').length
-    : (data.yearly_count  || 0);
-  const totalActive  = activeCount + trialCount;
-  const paid         = monthlyCount + yearlyCount;
-  const rev          = monthlyCount * 9900 + yearlyCount * (79000/12);
-
-  setKPI('kpi-total', totalActive.toLocaleString() + ' 명', 'gold',
-    '<span class="up">↑ ' + (data.new_7d||0) + '명</span> 최근 7일');
+  setKPI('kpi-total', total.toLocaleString() + ' 명', 'gold',
+    '<span class="up">↑ ' + new7d + '명</span> 최근 7일');
   setKPI('kpi-paid',  paid.toLocaleString() + ' 명', 'green',
-    '월간 ' + monthlyCount + ' + 연간 ' + yearlyCount);
+    '월간 ' + monthly + ' + 연간 ' + yearly);
   setKPI('kpi-rev',   '₩ ' + Math.floor(rev).toLocaleString(), 'blue', '이번 달 추정');
   setKPI('kpi-send', send.sent + ' 건', 'amber',
     '( 완료 ' + send.sent + ' · 실패 <span style="color:' + (send.failed>0?'var(--red)':'var(--muted)') + '">' + send.failed + ' )</span>');
