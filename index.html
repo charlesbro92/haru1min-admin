@@ -636,7 +636,7 @@ tr:hover td { background:rgba(255,255,255,.02); }
           <thead><tr>
             <th style="width:36px"><input type="checkbox" id="checkAll" onclick="toggleCheckAll(this)"
               style="accent-color:var(--gold);cursor:pointer;width:14px;height:14px"></th>
-            <th>이름</th><th>전화번호</th><th style="text-align:center">플랜</th><th style="text-align:right">금액</th><th style="text-align:center">상태</th><th style="text-align:center">발송시간</th><th style="text-align:center">가입시각</th><th style="text-align:center">시작일</th><th style="text-align:center">종료일</th><th>이메일</th><th>메모</th><th style="text-align:center">작업</th>
+            <th>이름</th><th>전화번호</th><th style="text-align:center">플랜</th><th style="text-align:right">금액</th><th style="text-align:center">상태</th><th style="text-align:center">발송시간</th><th style="text-align:center">가입시각</th><th style="text-align:center">시작일</th><th style="text-align:center">종료일</th><th style="width:120px">이메일</th><th style="width:120px">메모</th><th style="width:120px;text-align:center">작업</th>
           </tr></thead>
           <tbody id="subTableBody"><tr><td colspan="13"><div class="empty"><span class="empty-ico">👥</span>구독자가 없습니다</div></td></tr></tbody>
         </table>
@@ -1685,7 +1685,7 @@ async function loadSubscribers() {
         <span class="badge ${s.plan}">${{monthly:'월간',yearly:'연간',free:'무료'}[s.plan]||s.plan}</span>
       </td>
       <td style="font-family:var(--mono);font-size:12px;text-align:right;color:var(--muted)">
-        ${{monthly:'₩9,900',yearly:'₩79,000',free:''}[s.plan]||''}
+        ${{monthly:'₩9,900',yearly:'₩79,000',free:'₩0'}[s.plan]||''}
       </td>
       <td style="text-align:center"><span class="badge ${s.status}"><span class="badge-dot"></span>${{active:'활성',trial:'체험',cancelled:'해지',expired:'만료'}[s.status]||s.status}</span></td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--gold);text-align:center">${hourLabel}</td>
@@ -1693,10 +1693,10 @@ async function loadSubscribers() {
       <td style="font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center">${startDate}</td>
       <td style="font-family:var(--mono);font-size:11px;color:${endColor};text-align:center">${endDateStr}</td>
       <td style="font-size:11px;color:var(--muted)">${emailStr}</td>
-      <td onclick="event.stopPropagation()" style="min-width:120px;max-width:180px">
+      <td onclick="event.stopPropagation()" style="width:120px;max-width:120px">
         <div style="display:flex;align-items:center;gap:4px">
           <span id="memoText_${s.id}"
-            style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;display:inline-block"
+            style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px;display:inline-block"
             title="${s.memo||''}">${s.memo||''}</span>
 
         </div>
