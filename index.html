@@ -1696,9 +1696,7 @@ async function loadSubscribers() {
           <span id="memoText_${s.id}"
             style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;display:inline-block"
             title="${s.memo||''}">${s.memo||'—'}</span>
-          <button onclick="startMemoEdit('${s.id}')"
-            style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:2px 4px;flex-shrink:0;opacity:.6"
-            title="메모 수정" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity='.6'">✏️</button>
+
         </div>
         <div id="memoEdit_${s.id}" style="display:none;gap:4px;align-items:center">
           <input id="memoInput_${s.id}" type="text" value="${s.memo||''}"
@@ -1769,7 +1767,7 @@ function buildMonthHistory(fromStr, toStr) {
     next.setUTCDate(next.getUTCDate() + 1);
     cur = next.toISOString().slice(0,10);
   }
-  return result.reverse(); // 최신 날짜 먼저
+  return result; // 오름차순 (오래된 날짜 먼저)
 }
 
 const MOCK_SEND_HISTORY = []; // loadSendHistory 진입 시 buildMonthHistory로 채워짐
@@ -2330,7 +2328,7 @@ function getArchiveList() {
     return true;
   });
 
-  return all.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+  return all.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
 }
 
 const CAT_LABEL = {
