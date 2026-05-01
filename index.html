@@ -97,7 +97,9 @@ body { background:var(--bg); color:var(--text); font-family:var(--sans); display
 .content { padding:28px; display:none; }
 .content.active { display:block; }
 
-/* ── KPI CARDS ── */
+#subTableWrap tbody tr { border-bottom:1px solid var(--b); }
+    #subTableWrap tbody tr:last-child { border-bottom:none; }
+    /* ── KPI CARDS ── */
 .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
 .kpi {
   background:var(--s2); border:1px solid var(--b); border-radius:12px;
@@ -634,9 +636,9 @@ tr:hover td { background:rgba(255,255,255,.02); }
           <thead><tr>
             <th style="width:36px"><input type="checkbox" id="checkAll" onclick="toggleCheckAll(this)"
               style="accent-color:var(--gold);cursor:pointer;width:14px;height:14px"></th>
-            <th>이름</th><th>전화번호</th><th>플랜</th><th>상태</th><th>발송시간</th><th>가입시각</th><th>시작일</th><th>종료일</th><th>이메일</th><th>메모</th><th>작업</th>
+            <th>이름</th><th>전화번호</th><th style="text-align:center">플랜</th><th style="text-align:right">금액</th><th style="text-align:center">상태</th><th style="text-align:center">발송시간</th><th style="text-align:center">가입시각</th><th style="text-align:center">시작일</th><th style="text-align:center">종료일</th><th>이메일</th><th>메모</th><th style="text-align:center">작업</th>
           </tr></thead>
-          <tbody id="subTableBody"><tr><td colspan="12"><div class="empty"><span class="empty-ico">👥</span>구독자가 없습니다</div></td></tr></tbody>
+          <tbody id="subTableBody"><tr><td colspan="13"><div class="empty"><span class="empty-ico">👥</span>구독자가 없습니다</div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1614,7 +1616,7 @@ async function loadSubscribers() {
   // ★ STATE.subscribers 항상 우선 사용 (API는 DB 연동 전까지 무시)
   const tbody = document.getElementById('subTableBody');
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="12"><div class="empty"><span class="empty-ico">👥</span>${searchVal?'검색 결과가 없습니다':'구독자가 없습니다'}</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13"><div class="empty"><span class="empty-ico">👥</span>${searchVal?'검색 결과가 없습니다':'구독자가 없습니다'}</div></td></tr>`;
     return;
   }
   tbody.innerHTML = filtered.map(s => {
@@ -1625,17 +1627,17 @@ async function loadSubscribers() {
     const createdDt  = s.created_at ? new Date(s.created_at) : null;
     const joinTimeStr = createdDt
       ? createdDt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Asia/Seoul'})
-      : '—';
+      : '';
 
     // 시작일 (created_at 날짜, KST)
     const startDate = createdDt
       ? createdDt.toLocaleDateString('ko-KR', {timeZone:'Asia/Seoul'})
-      : '—';
+      : '';
 
     // 종료일
     const endDateStr = s.end_date
       ? new Date(s.end_date).toLocaleDateString('ko-KR')
-      : (isCancelled ? '해지됨' : '—');
+      : (isCancelled ? '해지됨' : '');
     const endColor = s.end_date && new Date(s.end_date) < new Date(Date.now()+7*86400000)
       ? 'var(--amber)' : 'var(--muted)';
 
@@ -1644,7 +1646,7 @@ async function loadSubscribers() {
       ? `<a href="mailto:${s.email}" onclick="event.stopPropagation()"
            style="color:var(--muted);font-size:11px;text-decoration:none"
            title="${s.email}">${s.email.length>16 ? s.email.slice(0,14)+'…' : s.email}</a>`
-      : '<span style="color:var(--b)">—</span>';
+      : '';
 
     const actionBtn = isCancelled
       ? `<div style="display:flex;gap:4px">
@@ -1679,23 +1681,23 @@ async function loadSubscribers() {
       </td>
       <td><strong>${s.name}</strong>${newBadge}</td>
       <td class="t-phone" style="font-size:12px">${s.phone}</td>
-      <td>
+      <td style="text-align:center">
         <span class="badge ${s.plan}">${{monthly:'월간',yearly:'연간',free:'무료'}[s.plan]||s.plan}</span>
-        <span style="font-size:10px;color:var(--muted);display:block;margin-top:2px;font-family:var(--mono)">
-          ${{monthly:'₩9,900/월',yearly:'₩79,000/년',free:'무료'}[s.plan]||''}
-        </span>
       </td>
-      <td><span class="badge ${s.status}"><span class="badge-dot"></span>${{active:'활성',trial:'체험',cancelled:'해지',expired:'만료'}[s.status]||s.status}</span></td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--gold)">${hourLabel}</td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${joinTimeStr}</td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${startDate}</td>
-      <td style="font-family:var(--mono);font-size:11px;color:${endColor}">${endDateStr}</td>
+      <td style="font-family:var(--mono);font-size:12px;text-align:right;color:var(--muted)">
+        ${{monthly:'₩9,900',yearly:'₩79,000',free:''}[s.plan]||''}
+      </td>
+      <td style="text-align:center"><span class="badge ${s.status}"><span class="badge-dot"></span>${{active:'활성',trial:'체험',cancelled:'해지',expired:'만료'}[s.status]||s.status}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--gold);text-align:center">${hourLabel}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center">${joinTimeStr}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center">${startDate}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:${endColor};text-align:center">${endDateStr}</td>
       <td style="font-size:11px;color:var(--muted)">${emailStr}</td>
       <td onclick="event.stopPropagation()" style="min-width:120px;max-width:180px">
         <div style="display:flex;align-items:center;gap:4px">
           <span id="memoText_${s.id}"
             style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;display:inline-block"
-            title="${s.memo||''}">${s.memo||'—'}</span>
+            title="${s.memo||''}">${s.memo||''}</span>
 
         </div>
         <div id="memoEdit_${s.id}" style="display:none;gap:4px;align-items:center">
@@ -1710,7 +1712,7 @@ async function loadSubscribers() {
             style="background:none;border:1px solid var(--b);color:var(--muted);padding:3px 6px;border-radius:4px;font-size:10px;cursor:pointer;font-family:var(--sans)">✕</button>
         </div>
       </td>
-      <td onclick="event.stopPropagation()">${actionBtn}</td>
+      <td onclick="event.stopPropagation()" style="text-align:center">${actionBtn}</td>
     </tr>`;
   }).join('');
 }
