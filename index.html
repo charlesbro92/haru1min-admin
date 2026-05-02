@@ -504,6 +504,7 @@ tr:hover td { background:rgba(255,255,255,.02); }
     <a class="sb-item" onclick="showPage('revenue')"><span class="ico">💰</span>매출</a>
     <a class="sb-item" onclick="showPage('payments')"><span class="ico">💳</span>결제 이력</a>
     <div class="sb-group">설정</div>
+    <a class="sb-item" onclick="showPage('scheduler')"><span class="ico">⏰</span>스케줄러</a>
     <a class="sb-item" onclick="showPage('settings')"><span class="ico">⚙️</span>설정</a>
   </nav>
   <div class="sb-bottom">
@@ -749,6 +750,91 @@ tr:hover td { background:rgba(255,255,255,.02); }
           <thead><tr><th>일시</th><th>구독자</th><th>플랜</th><th>금액</th><th>상태</th><th>주문번호</th></tr></thead>
           <tbody id="payBody"><tr><td colspan="6"><div class="empty"><span class="empty-ico">💳</span>결제 이력이 없습니다</div></td></tr></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── PAGE: 스케줄러 ── -->
+  <div class="content" id="page-scheduler">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:900px">
+      <div class="panel" style="grid-column:1/-1">
+        <div class="panel-head">
+          <div class="panel-title">⏰ 스케줄러 현황</div>
+          <div style="display:flex;gap:8px">
+            <span id="schedulerRunningBadge" style="font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid var(--b);color:var(--muted)">확인 중...</span>
+            <button onclick="loadSchedulerStatus()" style="background:none;border:1px solid var(--b);color:var(--muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer">🔄 새로고침</button>
+          </div>
+        </div>
+        <div style="padding:20px"><div id="schedulerJobList" style="display:flex;flex-direction:column;gap:10px"><div style="color:var(--muted);font-size:12px">로딩 중...</div></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">📡 RSS 자동 수집</div></div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px">자동 수집 활성화</span>
+            <span onclick="document.getElementById('rssEnabled').click()" id="rssToggleSlider"
+              style="display:inline-block;width:44px;height:24px;background:var(--b);border-radius:24px;cursor:pointer;transition:.3s;position:relative">
+              <input type="checkbox" id="rssEnabled" style="opacity:0;width:0;height:0;position:absolute" onchange="onSchedulerToggle()">
+            </span>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px">수집 시각 (매일)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select id="rssHour" style="flex:1;background:var(--s3);border:1px solid var(--b);color:var(--text);padding:8px;border-radius:6px;font-size:13px;outline:none">
+                <option value="5">오전 5시</option><option value="6" selected>오전 6시</option><option value="7">오전 7시</option><option value="8">오전 8시</option>
+              </select>
+              <span style="color:var(--muted)">:</span>
+              <select id="rssMinute" style="flex:1;background:var(--s3);border:1px solid var(--b);color:var(--text);padding:8px;border-radius:6px;font-size:13px;outline:none">
+                <option value="0" selected>00분</option><option value="30">30분</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="saveSchedulerConfig()" style="flex:1;background:var(--gold);color:var(--bg);border:none;padding:10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">💾 저장</button>
+            <button onclick="runJobNow('rss_collect')" style="flex:1;background:none;border:1px solid var(--gold);color:var(--gold);padding:10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">▶ 지금 실행</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">📝 콘텐츠 자동 생성</div></div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px">자동 생성 활성화</span>
+            <span onclick="document.getElementById('contentEnabled').click()" id="contentToggleSlider"
+              style="display:inline-block;width:44px;height:24px;background:var(--b);border-radius:24px;cursor:pointer;transition:.3s;position:relative">
+              <input type="checkbox" id="contentEnabled" style="opacity:0;width:0;height:0;position:absolute" onchange="onSchedulerToggle()">
+            </span>
+          </div>
+          <div style="padding:8px;background:rgba(201,168,76,.08);border-radius:6px;border:1px solid rgba(201,168,76,.2);font-size:11px;color:var(--muted)">
+            ⚠️ RSS 수집보다 30분 이상 늦게 설정 권장
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px">생성 시각 (매일)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select id="contentHour" style="flex:1;background:var(--s3);border:1px solid var(--b);color:var(--text);padding:8px;border-radius:6px;font-size:13px;outline:none">
+                <option value="6">오전 6시</option><option value="7" selected>오전 7시</option><option value="8">오전 8시</option>
+              </select>
+              <span style="color:var(--muted)">:</span>
+              <select id="contentMinute" style="flex:1;background:var(--s3);border:1px solid var(--b);color:var(--text);padding:8px;border-radius:6px;font-size:13px;outline:none">
+                <option value="0">00분</option><option value="30" selected>30분</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="saveSchedulerConfig()" style="flex:1;background:var(--gold);color:var(--bg);border:none;padding:10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">💾 저장</button>
+            <button onclick="runJobNow('content_generate')" style="flex:1;background:none;border:1px solid var(--gold);color:var(--gold);padding:10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">▶ 지금 실행</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel" style="grid-column:1/-1">
+        <div class="panel-head">
+          <div class="panel-title">📋 실행 이력</div>
+          <span onclick="document.getElementById('schedulerLog').innerHTML=''" style="font-size:11px;color:var(--muted);cursor:pointer">지우기</span>
+        </div>
+        <div id="schedulerLog" style="padding:16px;font-family:var(--mono);font-size:11px;color:var(--muted);min-height:80px;max-height:200px;overflow-y:auto">
+          <div>실행 기록이 여기에 표시됩니다</div>
+        </div>
       </div>
     </div>
   </div>
@@ -1267,7 +1353,7 @@ setInterval(updateClock, 1000); updateClock();
 const pageTitles = {
   overview:'📊 개요', subscribers:'👥 구독자 관리',
   send:'📨 발송 현황', content:'📝 콘텐츠 관리',
-  revenue:'💰 매출 현황', payments:'💳 결제 이력', settings:'⚙️ 설정',
+  revenue:'💰 매출 현황', payments:'💳 결제 이력', scheduler:'⏰ 스케줄러', settings:'⚙️ 설정',
 };
 function showPage(name) {
   document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
@@ -1298,6 +1384,7 @@ function loadPage(name) {
   if (name === 'revenue')      loadRevenue();
   if (name === 'payments')     loadPayments();
   if (name === 'settings')     loadSettings();
+  if (name === 'scheduler')    loadSchedulerStatus();
 }
 function loadAll() { loadPage(currentPage); showToast('새로고침 완료', 'ok'); }
 
